@@ -5536,3 +5536,237 @@ html {
     color: white;
     box-shadow: 0 3px 10px rgba(15, 28, 58, 0.3);
 }
+/* ── Login card centrado ── */
+.login-card {
+    text-align: center;
+}
+.login-card .form-group,
+.login-card .form-group label,
+.login-card .form-group input,
+.login-card .form-group select {
+    text-align: left;
+}
+#login-form-wrap .btn,
+#register-form-wrap .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+}
+/* Checkbox row centrado */
+#login-form-wrap > div {
+    justify-content: center;
+}
+
+/* ── Login botones y contenido centrado (fix) ── */
+#login-screen .login-card {
+    text-align: center;
+}
+#login-screen .login-card .form-group,
+#login-screen .login-card .form-group label,
+#login-screen .login-card .form-group input,
+#login-screen .login-card .form-group select,
+#login-screen .login-card .form-group textarea,
+#login-screen .login-card .form-row {
+    text-align: left;
+}
+#login-screen .login-card .btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+}
+#login-screen #login-form-wrap > div[style*="display:flex"] {
+    justify-content: center;
+}
+#login-screen .login-card p[style*="text-align:center"],
+#login-screen .login-card > p {
+    text-align: center !important;
+}
+
+/* ════════════════════════════════════════════════
+   MEGA FIX — Stats, Barra blanca, Admin navbar
+════════════════════════════════════════════════ */
+
+/* ── 1. STATS BAR — forzar fila horizontal ── */
+.stats-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0 !important;
+    background: rgba(255,255,255,0.06) !important;
+    border-top: 1px solid rgba(245,197,24,0.25) !important;
+    margin-top: 40px !important;
+    padding: 24px 20px !important;
+}
+
+.stat-item {
+    text-align: center;
+    flex: 1;
+    padding: 0 20px;
+    border-right: 1px solid rgba(255,255,255,0.12);
+    animation: statFadeIn 0.6s ease both;
+}
+.stat-item:last-child { border-right: none; }
+
+@keyframes statFadeIn {
+    from { opacity:0; transform: translateY(16px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+.stat-item:nth-child(1) { animation-delay: 0.1s; }
+.stat-item:nth-child(2) { animation-delay: 0.2s; }
+.stat-item:nth-child(3) { animation-delay: 0.3s; }
+.stat-item:nth-child(4) { animation-delay: 0.4s; }
+
+.stat-item .num {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(22px, 3.5vw, 36px) !important;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+    display: block;
+}
+.stat-item .lbl {
+    font-size: 10px !important;
+    color: rgba(255,255,255,0.6);
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Stats responsive */
+@media (max-width: 600px) {
+    .stats-bar {
+        flex-wrap: wrap !important;
+        gap: 0 !important;
+    }
+    .stat-item {
+        flex: 0 0 50%;
+        padding: 14px 10px;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .stat-item:nth-child(odd) { border-right: 1px solid rgba(255,255,255,0.08) !important; }
+    .stat-item:nth-child(3),
+    .stat-item:nth-child(4) { border-bottom: none; }
+}
+
+/* ── 2. ELIMINAR BARRA BLANCA entre secciones ── */
+#page-home { background: var(--bg); }
+#page-home > div { margin: 0 !important; }
+#hero { margin-bottom: 0 !important; }
+.section { margin: 0 auto; }
+
+/* Eliminar cualquier gap blanco inesperado */
+#home-role-section,
+#home-role-panel {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* ── 3. NAVBAR ADMIN — rediseño completo ── */
+#navbar {
+    background: linear-gradient(135deg, #0a1628 0%, #0f1c3a 60%, #1a3a6e 100%) !important;
+    border-bottom: 2px solid var(--gold) !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5) !important;
+    height: auto !important;
+    min-height: 60px !important;
+    padding: 0 20px !important;
+    flex-wrap: wrap !important;
+    gap: 0 !important;
+}
+
+/* ── 4. NAV LINKS ROW (tabs del admin) — rediseño ── */
+.nav-links-row {
+    display: flex !important;
+    gap: 2px !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    padding: 6px 0 !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    max-width: 100% !important;
+}
+.nav-links-row::-webkit-scrollbar { display: none; }
+
+.nav-links-row a,
+.nav-links-row button,
+.nav-btn {
+    font-size: 11.5px !important;
+    padding: 6px 10px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    transition: all 0.2s !important;
+    color: rgba(255,255,255,0.85) !important;
+    background: none !important;
+    border: 1px solid transparent !important;
+}
+
+.nav-links-row a:hover,
+.nav-links-row button:hover,
+.nav-btn:hover {
+    background: rgba(212,175,55,0.18) !important;
+    color: var(--gold-light) !important;
+    border-color: rgba(212,175,55,0.3) !important;
+    transform: translateY(-1px) !important;
+}
+
+.nav-links-row a.active,
+.nav-links-row button.active {
+    background: rgba(212,175,55,0.25) !important;
+    color: var(--gold) !important;
+    border-color: rgba(212,175,55,0.4) !important;
+}
+
+/* ── 5. ANIMACIONES GENERALES para secciones ── */
+.valor-card,
+.anuncio-card,
+.teacher-card,
+.section-title,
+.card,
+[class*="-card"] {
+    animation: sectionFadeUp 0.5s ease both;
+}
+
+@keyframes sectionFadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Valor cards con delay escalonado */
+.valor-card:nth-child(1) { animation-delay: 0.05s; }
+.valor-card:nth-child(2) { animation-delay: 0.10s; }
+.valor-card:nth-child(3) { animation-delay: 0.15s; }
+.valor-card:nth-child(4) { animation-delay: 0.20s; }
+.valor-card:nth-child(5) { animation-delay: 0.25s; }
+.valor-card:nth-child(6) { animation-delay: 0.30s; }
+
+/* Hover animado en cards */
+.valor-card:hover,
+[class*="-card"]:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.15) !important;
+    transition: all 0.25s ease !important;
+}
+
+/* ── 6. SECTION TITLES animados ── */
+.section-title h2 {
+    animation: titleSlideIn 0.6s ease both;
+}
+@keyframes titleSlideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+.divider {
+    animation: dividerGrow 0.6s ease 0.3s both;
+}
+@keyframes dividerGrow {
+    from { width: 0; }
+    to   { width: 60px; }
+}
