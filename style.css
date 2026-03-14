@@ -6043,3 +6043,65 @@ input[type="password"] { padding-right: 42px !important; }
         max-width: 300px !important;
     }
 }
+
+
+
+/* ══════════════════════════════════════════════════
+   FIX FINAL DEFINITIVO — dash-header y tabs
+══════════════════════════════════════════════════ */
+#page-admin .dash-header,
+#page-profesor .dash-header,
+#page-estudiante .dash-header,
+#page-padre .dash-header,
+#page-enfermeria .dash-header,
+.dash-header {
+    background: linear-gradient(135deg, #0f1c3a 0%, #1a3a6e 100%) !important;
+    border-bottom: 3px solid #d4af37 !important;
+    padding: 20px 24px 0 !important;
+    color: white !important;
+}
+.dash-header h1 {
+    color: white !important;
+    font-family: 'Playfair Display', serif !important;
+    font-size: 22px !important;
+    margin: 0 0 4px !important;
+}
+.dash-header p {
+    color: rgba(255,255,255,.65) !important;
+    font-size: 13px !important;
+    margin: 0 0 14px !important;
+}
+.dash-tabs {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-top: 14px !important;
+    padding-bottom: 14px !important;
+}
+.dash-tab {
+    background: rgba(255,255,255,.1) !important;
+    color: rgba(255,255,255,.9) !important;
+    border: 1px solid rgba(255,255,255,.2) !important;
+    border-radius: 20px !important;
+    padding: 6px 15px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    font-family: 'Nunito', sans-serif !important;
+    white-space: nowrap !important;
+    transition: all .2s !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+.dash-tab:hover {
+    background: rgba(255,255,255,.22) !important;
+    color: white !important;
+    border-color: rgba(255,255,255,.4) !important;
+}
+.dash-tab.active {
+    background: #d4af37 !important;
+    color: #0f1c3a !important;
+    border-color: #d4af37 !important;
+    font-weight: 800 !important;
+}
