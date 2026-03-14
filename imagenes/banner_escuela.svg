@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#87CEEB"/>
+      <stop offset="100%" style="stop-color:#E0F4FF"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#E8D5B7"/>
+      <stop offset="100%" style="stop-color:#D4BC99"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#C0392B"/>
+      <stop offset="100%" style="stop-color:#96281B"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5C518"/>
+      <stop offset="100%" style="stop-color:#C9A000"/>
+    </linearGradient>
+    <linearGradient id="overlay" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#16213E;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#0F3460;stop-opacity:0.7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cielo -->
+  <rect width="800" height="400" fill="url(#sky)"/>
+  
+  <!-- Nubes decorativas -->
+  <ellipse cx="100" cy="60" rx="60" ry="25" fill="white" opacity="0.8"/>
+  <ellipse cx="140" cy="55" rx="50" ry="22" fill="white" opacity="0.8"/>
+  <ellipse cx="70" cy="58" rx="35" ry="18" fill="white" opacity="0.8"/>
+  
+  <ellipse cx="650" cy="80" rx="70" ry="28" fill="white" opacity="0.7"/>
+  <ellipse cx="700" cy="74" rx="55" ry="24" fill="white" opacity="0.7"/>
+
+  <!-- Piso / grama -->
+  <rect x="0" y="340" width="800" height="60" fill="#5D8A3C"/>
+  <rect x="0" y="338" width="800" height="8" fill="#4A7A2E"/>
+
+  <!-- Edificio principal -->
+  <!-- Cuerpo principal -->
+  <rect x="100" y="160" width="600" height="180" fill="url(#wall)"/>
+  
+  <!-- Techo central -->
+  <polygon points="300,100 500,100 520,160 280,160" fill="url(#roof)"/>
+  
+  <!-- Techo izquierdo -->
+  <polygon points="100,140 250,140 270,160 100,160" fill="url(#roof)" opacity="0.85"/>
+  
+  <!-- Techo derecho -->
+  <polygon points="550,140 700,140 700,160 530,160" fill="url(#roof)" opacity="0.85"/>
+
+  <!-- Ventanas superiores (fila 1) -->
+  <rect x="130" y="185" width="60" height="50" rx="4" fill="#87CEEB" opacity="0.7" stroke="#BFA980" stroke-width="2"/>
+  <rect x="240" y="185" width="60" height="50" rx="4" fill="#87CEEB" opacity="0.7" stroke="#BFA980" stroke-width="2"/>
+  
+  <rect x="490" y="185" width="60" height="50" rx="4" fill="#87CEEB" opacity="0.7" stroke="#BFA980" stroke-width="2"/>
+  <rect x="600" y="185" width="60" height="50" rx="4" fill="#87CEEB" opacity="0.7" stroke="#BFA980" stroke-width="2"/>
+
+  <!-- Ventanas grandes centrales -->
+  <rect x="330" y="175" width="65" height="60" rx="4" fill="#87CEEB" opacity="0.7" stroke="#BFA980" stroke-width="2"/>
+  <rect x="405" y="175" width="65" height="60" rx="4" fill="#87CEEB" opacity="0.7" stroke="#BFA980" stroke-width="2"/>
+  
+  <!-- Cruz ventana central (detalle religioso) -->
+  <line x1="362" y1="175" x2="362" y2="235" stroke="#BFA980" stroke-width="2"/>
+  <line x1="330" y1="205" x2="395" y2="205" stroke="#BFA980" stroke-width="2"/>
+  <line x1="437" y1="175" x2="437" y2="235" stroke="#BFA980" stroke-width="2"/>
+  <line x1="405" y1="205" x2="470" y2="205" stroke="#BFA980" stroke-width="2"/>
+
+  <!-- Puerta principal -->
+  <rect x="350" y="280" width="100" height="60" rx="8" fill="#8B6914"/>
+  <rect x="353" y="283" width="44" height="54" rx="6" fill="#A07820"/>
+  <rect x="403" y="283" width="44" height="54" rx="6" fill="#A07820"/>
+  <!-- Arco de la puerta -->
+  <path d="M350 290 Q400 260 450 290" fill="none" stroke="#C9A000" stroke-width="3"/>
+  <!-- Manija -->
+  <circle cx="399" cy="312" r="4" fill="url(#gold)"/>
+  <circle cx="401" cy="312" r="4" fill="url(#gold)"/>
+  
+  <!-- Escalones -->
+  <rect x="330" y="338" width="140" height="6" rx="2" fill="#BFA980"/>
+  <rect x="340" y="332" width="120" height="6" rx="2" fill="#BFA980"/>
+
+  <!-- Bandera dominicana (pequeña) -->
+  <rect x="390" y="100" width="2" height="40" fill="#555"/>
+  <rect x="392" y="100" width="18" height="10" fill="#002D62"/>
+  <rect x="392" y="110" width="18" height="10" fill="#CF142B"/>
+  <rect x="392" y="100" width="4" height="20" fill="white"/>
+
+  <!-- Árboles decorativos -->
+  <rect x="90" y="290" width="8" height="50" fill="#6B4423"/>
+  <ellipse cx="94" cy="280" rx="25" ry="35" fill="#2E7D32"/>
+  <ellipse cx="85" cy="270" rx="20" ry="28" fill="#388E3C"/>
+  
+  <rect x="700" y="290" width="8" height="50" fill="#6B4423"/>
+  <ellipse cx="704" cy="280" rx="25" ry="35" fill="#2E7D32"/>
+  <ellipse cx="714" cy="270" rx="20" ry="28" fill="#388E3C"/>
+
+  <!-- Overlay oscuro para texto legible -->
+  <rect width="800" height="400" fill="url(#overlay)"/>
+  
+  <!-- Texto sobre la imagen -->
+  <text x="400" y="190" font-family="Georgia,serif" font-size="28" font-weight="bold"
+        fill="#FFFFFF" text-anchor="middle" opacity="0.95">Centro Educativo</text>
+  <text x="400" y="228" font-family="Georgia,serif" font-size="38" font-weight="bold"
+        fill="#F5C518" text-anchor="middle">Otilia Peláez</text>
+  <text x="400" y="262" font-family="Georgia,serif" font-size="13"
+        fill="#FFE066" text-anchor="middle" letter-spacing="3">SABANA PERDIDA · SANTO DOMINGO NORTE · RD</text>
+  
+  <!-- Líneas decorativas texto -->
+  <line x1="150" y1="270" x2="340" y2="270" stroke="#F5C518" stroke-width="1.5" opacity="0.6"/>
+  <line x1="460" y1="270" x2="650" y2="270" stroke="#F5C518" stroke-width="1.5" opacity="0.6"/>
+  
+  <!-- Año fundación -->
+  <text x="400" y="296" font-family="Georgia,serif" font-size="11"
+        fill="rgba(255,255,255,0.7)" text-anchor="middle">FUNDADA EN 1978 · DISTRITO EDUCATIVO 10-02</text>
+</svg>
