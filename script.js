@@ -624,23 +624,32 @@ function buildNavbar(role){
         <button class="nav-btn" onclick="showPage('anuncios')">📢 Anuncios</button>
       </div>`;
   }
-  nl.innerHTML=html;
-  // Re-attach dropdown events
-  document.querySelectorAll('.dropdown-trigger').forEach(btn=>{
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();
-      const menu=this.nextElementSibling;
-      document.querySelectorAll('.dropdown-menu.open').forEach(m=>{if(m!==menu)m.classList.remove('open');});
-      menu.classList.toggle('open');
-    });
+  // Inyectar onclick directamente en el HTML generado
+  nl.innerHTML = html.replace(
+    /class="nav-btn dropdown-trigger"/g,
+    'class="nav-btn dropdown-trigger" onclick="toggleDropdown(this,event)"'
+  );
+}
+
+function toggleDropdown(btn, e) {
+  e.stopPropagation();
+  var menu = btn.nextElementSibling;
+  if (!menu || !menu.classList.contains('dropdown-menu')) return;
+  var isOpen = menu.classList.contains('open');
+  // Cerrar todos
+  document.querySelectorAll('.dropdown-menu.open').forEach(function(m){ m.classList.remove('open'); });
+  // Abrir si estaba cerrado
+  if (!isOpen) menu.classList.add('open');
+}
+
+// Cerrar dropdowns al click fuera — solo una vez
+if (!window._ddClose) {
+  window._ddClose = true;
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest || !e.target.closest('.nav-dropdown')) {
+      document.querySelectorAll('.dropdown-menu.open').forEach(function(m){ m.classList.remove('open'); });
+    }
   });
-  // Solo agregar el listener de cierre una vez
-  if(!window._dropdownListenerAdded){
-    window._dropdownListenerAdded = true;
-    document.addEventListener('click',function(){
-      document.querySelectorAll('.dropdown-menu.open').forEach(function(m){m.classList.remove('open');});
-    });
-  }
 }
 
 function showAdminSection(id){
