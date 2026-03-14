@@ -6105,3 +6105,128 @@ input[type="password"] { padding-right: 42px !important; }
     border-color: #d4af37 !important;
     font-weight: 800 !important;
 }
+
+
+/* ══════════════════════════════════════════════════════════
+   FIX TOTAL FINAL — Tabs visibles + Dropdowns funcionando
+══════════════════════════════════════════════════════════ */
+
+/* TABS: fondo azul cielo para ver los nombres */
+.dash-tab {
+    background: rgba(100,160,255,.15) !important;
+    color: #e0eeff !important;
+    border: 1px solid rgba(100,160,255,.3) !important;
+    border-radius: 20px !important;
+    padding: 6px 15px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    font-family: 'Nunito', sans-serif !important;
+    white-space: nowrap !important;
+    transition: all .2s !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+.dash-tab:hover {
+    background: rgba(100,160,255,.3) !important;
+    color: white !important;
+    border-color: rgba(100,160,255,.5) !important;
+}
+.dash-tab.active {
+    background: #d4af37 !important;
+    color: #0f1c3a !important;
+    border-color: #d4af37 !important;
+    font-weight: 800 !important;
+}
+
+/* DROPDOWNS: fix completo */
+#navbar { overflow: visible !important; }
+.nav-links, .nav-links-row { overflow: visible !important; }
+.nav-dropdown {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    overflow: visible !important;
+}
+.dropdown-menu {
+    display: none !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    margin-top: 4px !important;
+    min-width: 220px !important;
+    background: linear-gradient(160deg, #1a2a50 0%, #0d1f3e 100%) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,.6) !important;
+    border: 1px solid rgba(212,175,55,.3) !important;
+    z-index: 999999 !important;
+    overflow: hidden !important;
+    transform: none !important;
+    pointer-events: all !important;
+}
+.dropdown-menu.open { display: block !important; }
+.dropdown-menu a {
+    display: flex !important;
+    align-items: center !important;
+    padding: 11px 18px !important;
+    color: rgba(255,255,255,.9) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    border-bottom: 1px solid rgba(255,255,255,.07) !important;
+    transition: background .15s !important;
+    min-height: 42px !important;
+    white-space: nowrap !important;
+}
+.dropdown-menu a:last-child { border-bottom: none !important; }
+.dropdown-menu a:hover {
+    background: rgba(212,175,55,.2) !important;
+    color: #f0d060 !important;
+    padding-left: 22px !important;
+}
+
+/* Móvil: dropdown centrado */
+@media (max-width: 768px) {
+    .nav-dropdown { position: static !important; }
+    .dropdown-menu {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin-top: 0 !important;
+        width: 85vw !important;
+        max-width: 300px !important;
+    }
+}
+
+
+/* ══ TABS VISIBLES — texto negro sobre fondo claro ══ */
+.dash-tab {
+    background: #f0f4ff !important;
+    color: #0f1c3a !important;
+    border: 1.5px solid #c5d0e8 !important;
+    border-radius: 20px !important;
+    padding: 6px 15px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    font-family: 'Nunito', sans-serif !important;
+    white-space: nowrap !important;
+    transition: all .2s !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+.dash-tab:hover {
+    background: #d4e3ff !important;
+    color: #0f1c3a !important;
+    border-color: #7ca0e0 !important;
+}
+.dash-tab.active {
+    background: #d4af37 !important;
+    color: #0f1c3a !important;
+    border-color: #d4af37 !important;
+    font-weight: 800 !important;
+}
