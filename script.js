@@ -1,4 +1,17 @@
 // ── Seguridad de login ─────────────────────────────────────────────
+
+// resetActivityTimer — definida al inicio para evitar errores
+var _activityTimeout = null;
+function resetActivityTimer() {
+    if (_activityTimeout) clearTimeout(_activityTimeout);
+    _activityTimeout = setTimeout(function() {
+        if (APP && APP.currentUser) {
+            if (typeof toast === 'function') toast('Sesión cerrada por inactividad', 'info');
+            if (typeof logout === 'function') logout();
+        }
+    }, 7200000);
+}
+
 var _loginAttempts = {};
 var _MAX_ATTEMPTS  = 5;
 var _LOCKOUT_MS    = 10 * 60 * 1000;
@@ -6572,19 +6585,6 @@ function deleteFaqItem(i){if(!confirm('¿Eliminar?'))return;(APP.faqExtra||[]).s
 // ══════════════════════════════════════════════
 //  FIX CRÍTICO — Funciones faltantes
 // ══════════════════════════════════════════════
-
-// resetActivityTimer — faltaba completamente
-var _activityTimeout = null;
-function resetActivityTimer() {
-    if (_activityTimeout) clearTimeout(_activityTimeout);
-    // Auto-logout después de 2 horas de inactividad
-    _activityTimeout = setTimeout(function() {
-        if (APP.currentUser) {
-            toast('Sesión cerrada por inactividad', 'info');
-            if (typeof logout === 'function') logout();
-        }
-    }, 7200000); // 2 horas
-}
 
 // Reiniciar timer en actividad del usuario
 ['click', 'keypress', 'scroll', 'touchstart'].forEach(function(ev) {
