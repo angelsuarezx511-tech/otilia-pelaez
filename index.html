@@ -87,7 +87,7 @@
                 <h2>Centro Educativo Otilia Peláez</h2>
                 <p>Sistema de Gestión Educativa · Sabana Perdida, SDN</p>
             </div>
-            <div id="login-form-wrap">
+            <div id="login-form-wrap" style="width:100%;">
                 <div id="login-alert" class="alert alert-error" style="display:none;"></div>
                 <!-- Saved account chips -->
                 <div id="saved-accounts-bar" style="display:none;margin-bottom:12px;"></div>
@@ -102,9 +102,9 @@
                     <input type="checkbox" id="remember-me" style="width:16px;height:16px;cursor:pointer;accent-color:var(--gold);">
                     <label for="remember-me" style="font-size:13px;color:#555;cursor:pointer;margin:0;">Recuérdame en este dispositivo</label>
                 </div>
-                <button class="btn btn-gold" style="width:100%;padding:14px;font-size:15px;margin-bottom:10px;" onclick="doLogin()">Iniciar Sesión →</button>
-                <button class="btn btn-outline" style="width:100%;margin-bottom:8px;" onclick="showRegister()">📝 Registrarse (Padre / Estudiante)</button>
-                <button class="btn btn-outline" style="width:100%;background:rgba(22,33,62,0.06);" onclick="openProfesorModal()">👨‍🏫 Acceso Maestros</button>
+                <button class="btn btn-gold" style="width:100%;padding:14px;font-size:15px;margin-bottom:10px;text-align:center;display:block;" onclick="doLogin()">Iniciar Sesión →</button>
+                <button class="btn btn-outline" style="width:100%;margin-bottom:8px;text-align:center;display:block;" onclick="showRegister()">📝 Registrarse (Padre / Estudiante)</button>
+                <button class="btn btn-outline" style="width:100%;background:rgba(22,33,62,0.06);text-align:center;display:block;" onclick="openProfesorModal()">👨‍🏫 Acceso Maestros</button>
             </div>
             <div id="register-form-wrap" style="display:none;">
                 <div id="reg-alert" class="alert alert-error" style="display:none;"></div>
@@ -1531,16 +1531,20 @@
                         <p style="font-size:13px;color:#888;margin-bottom:14px;">Edita los títulos y contenidos de los niveles que aparecen en la página de inicio.</p>
                         <div id="niveles-editor">
                             <div class="nivel-edit-row"><input type="text" placeholder="Ícono" class="nivel-icon-in" value="🌱"><input type="text" placeholder="Título" class="nivel-title-in" value="Nivel Primario"><textarea placeholder="Descripción" class="nivel-desc-in" rows="2">1° al 6° grado · Matemáticas, Lengua, Ciencias, Arte y Música</textarea>
-                                <button class="btn-del-nivel" onclick="delNivel(this)">✕</button>
+                                <button
+                                    class="btn-del-nivel" onclick="delNivel(this)">✕</button>
                             </div>
                             <div class="nivel-edit-row"><input type="text" placeholder="Ícono" class="nivel-icon-in" value="📖"><input type="text" placeholder="Título" class="nivel-title-in" value="Nivel Secundario"><textarea placeholder="Descripción" class="nivel-desc-in" rows="2">1° al 4° grado · Matemáticas avanzadas, Inglés, Física, Historia</textarea>
-                                <button class="btn-del-nivel" onclick="delNivel(this)">✕</button>
+                                <button
+                                    class="btn-del-nivel" onclick="delNivel(this)">✕</button>
                             </div>
                             <div class="nivel-edit-row"><input type="text" placeholder="Ícono" class="nivel-icon-in" value="🎓"><input type="text" placeholder="Título" class="nivel-title-in" value="Bachilleratos"><textarea placeholder="Descripción" class="nivel-desc-in" rows="2">General · Informática · Contabilidad · Educación · Turismo</textarea>
-                                <button class="btn-del-nivel" onclick="delNivel(this)">✕</button>
+                                <button
+                                    class="btn-del-nivel" onclick="delNivel(this)">✕</button>
                             </div>
                             <div class="nivel-edit-row"><input type="text" placeholder="Ícono" class="nivel-icon-in" value="🏆"><input type="text" placeholder="Título" class="nivel-title-in" value="Extracurriculares"><textarea placeholder="Descripción" class="nivel-desc-in" rows="2">Deportes, Banda escolar, Club de debate, Teatro y danza, Voluntariado</textarea>
-                                <button class="btn-del-nivel" onclick="delNivel(this)">✕</button>
+                                <button
+                                    class="btn-del-nivel" onclick="delNivel(this)">✕</button>
                             </div>
                         </div>
                         <button class="btn btn-outline" style="margin:8px 4px 0 0;" onclick="addNivel()">➕ Agregar nivel</button>
@@ -1650,13 +1654,16 @@
                         <h4 class="cfg-section-h">💬 Testimonios de Familias</h4>
                         <div id="test-editor">
                             <div class="test-edit-row"><input type="text" class="test-emoji-in" value="👩"><input type="text" class="test-autor-in" value="María González"><input type="text" class="test-rol-in" value="Madre de estudiante"><textarea class="test-txt-in" rows="2">"Excelente centro educativo. Mi hijo ha mejorado mucho académicamente y en valores desde que ingresó."</textarea>
-                                <button class="btn-del-nivel" onclick="this.closest('.test-edit-row').remove()">✕</button>
+                                <button
+                                    class="btn-del-nivel" onclick="this.closest('.test-edit-row').remove()">✕</button>
                             </div>
                             <div class="test-edit-row"><input type="text" class="test-emoji-in" value="👨"><input type="text" class="test-autor-in" value="Carlos Reyes"><input type="text" class="test-rol-in" value="Padre de familia"><textarea class="test-txt-in" rows="2">"Los maestros son muy dedicados y siempre están atentos al progreso de los estudiantes."</textarea>
-                                <button class="btn-del-nivel" onclick="this.closest('.test-edit-row').remove()">✕</button>
+                                <button
+                                    class="btn-del-nivel" onclick="this.closest('.test-edit-row').remove()">✕</button>
                             </div>
                             <div class="test-edit-row"><input type="text" class="test-emoji-in" value="👧"><input type="text" class="test-autor-in" value="Valentina Soto"><input type="text" class="test-rol-in" value="Ex-estudiante"><textarea class="test-txt-in" rows="2">"Me encanta el ambiente del colegio. Aprendí mucho y hice amigos para toda la vida."</textarea>
-                                <button class="btn-del-nivel" onclick="this.closest('.test-edit-row').remove()">✕</button>
+                                <button
+                                    class="btn-del-nivel" onclick="this.closest('.test-edit-row').remove()">✕</button>
                             </div>
                         </div>
                         <button class="btn btn-outline" style="margin:8px 4px 0 0;" onclick="addTestimonio()">➕ Agregar testimonio</button>
@@ -3640,19 +3647,20 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label>Grado *</label><select id="st-grado" onchange="checkStGrado()"><option value="">Seleccionar</option><optgroup label="📗 Primaria · 1er Ciclo"><option>1° Primaria</option><option>2° Primaria</option><option>3° Primaria</option></optgroup><optgroup label="📘 Primaria · 2do Ciclo"><option>4° Primaria</option><option>5° Primaria</option><option>6° Primaria</option></optgroup><optgroup label="📙 Secundaria · 1er Ciclo"><option>1° Secundaria</option><option>2° Secundaria</option><option>3° Secundaria</option></optgroup><optgroup label="📕 Secundaria · 2do Ciclo (Bachillerato)"><option>4° Secundaria</option><option>5° Secundaria</option><option>6° Secundaria</option></optgroup></select></div>
-                    <div class="form-group"><label>Carrera / Bachillerato</label><select id="st-carrera"><option value="">N/A</option><option>General</option><option>Ciencias de la Salud</option><option>Informática y Sistemas</option><option>Contabilidad y Finanzas</option><option>Educación</option><option>Turismo Hotelero</option><option>Humanidades</option></select></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>Correo</label><input type="email" id="st-email"></div>
-                    <div class="form-group"><label>Contraseña</label><input type="password" id="st-pass"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>Tel. Padre/Tutor</label><input type="tel" id="st-tel-padre"></div>
-                    <div class="form-group"><label>Correo Padre/Tutor</label><input type="email" id="st-email-padre"><small style="font-size:11px;color:#888;">Vincula al padre registrado en el sistema</small></div>
-                </div>
+                    <div
+                        class="form-group"><label>Carrera / Bachillerato</label><select id="st-carrera"><option value="">N/A</option><option>General</option><option>Ciencias de la Salud</option><option>Informática y Sistemas</option><option>Contabilidad y Finanzas</option><option>Educación</option><option>Turismo Hotelero</option><option>Humanidades</option></select></div>
             </div>
-            <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modal-student')">Cancelar</button><button class="btn btn-gold" onclick="saveStudent()">✅ Guardar</button></div>
+            <div class="form-row">
+                <div class="form-group"><label>Correo</label><input type="email" id="st-email"></div>
+                <div class="form-group"><label>Contraseña</label><input type="password" id="st-pass"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Tel. Padre/Tutor</label><input type="tel" id="st-tel-padre"></div>
+                <div class="form-group"><label>Correo Padre/Tutor</label><input type="email" id="st-email-padre"><small style="font-size:11px;color:#888;">Vincula al padre registrado en el sistema</small></div>
+            </div>
         </div>
+        <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modal-student')">Cancelar</button><button class="btn btn-gold" onclick="saveStudent()">✅ Guardar</button></div>
+    </div>
     </div>
 
     <div class="modal-overlay" id="modal-nota">
