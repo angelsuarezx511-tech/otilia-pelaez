@@ -6086,3 +6086,114 @@ table tbody tr:nth-child(5) { animation-delay: 0.25s; }
     from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
 }
+
+
+/* ── FIX: Login inputs y labels centrados, ojo del password fijo ── */
+
+/* Card centrado pero form items al 100% de ancho */
+#login-screen .login-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+#login-screen #login-form-wrap,
+#login-screen #register-form-wrap {
+    width: 100% !important;
+}
+
+/* Labels alineados izquierda */
+#login-screen .form-group {
+    width: 100% !important;
+    text-align: left !important;
+}
+#login-screen .form-group label {
+    text-align: left !important;
+    display: block !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.8px !important;
+    text-transform: uppercase !important;
+    color: #666 !important;
+    margin-bottom: 6px !important;
+}
+
+/* Inputs al 100% */
+#login-screen .form-group input,
+#login-screen .form-group select {
+    width: 100% !important;
+    text-align: left !important;
+}
+
+/* FIX: contenedor del password con posición relativa */
+#login-screen .form-group > div[style*="position:relative"],
+#login-screen .form-group > div[style*="position: relative"] {
+    position: relative !important;
+    width: 100% !important;
+}
+
+/* FIX: botón del ojo — pegado al input, no flotando */
+#login-screen .form-group div[style*="relative"] button[type="button"] {
+    position: absolute !important;
+    right: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    font-size: 16px !important;
+    color: #aaa !important;
+    padding: 0 !important;
+    width: auto !important;
+    display: inline-flex !important;
+    z-index: 2 !important;
+}
+
+/* Botones centrados al 100% */
+#login-form-wrap .btn,
+#login-form-wrap button.btn,
+#register-form-wrap .btn {
+    width: 100% !important;
+    text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+/* Checkbox row centrado */
+#login-form-wrap > div[style*="display:flex"],
+#login-form-wrap > div[style*="display: flex"] {
+    width: 100% !important;
+    justify-content: flex-start !important;
+}
+
+/* ── FIX CRÍTICO: Botón ojo del password ── */
+#login-screen .form-group div button[type="button"],
+.form-group div[style*="relative"] button[type="button"] {
+    position: absolute !important;
+    right: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    color: #999 !important;
+    padding: 0 4px !important;
+    width: 24px !important;
+    height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2 !important;
+    animation: none !important;
+    pointer-events: all !important;
+}
+
+/* Asegurar que el input tenga padding para no quedar tapado por el ojo */
+#login-screen #login-password,
+#login-screen #reg-pass,
+#login-screen #reg-pass-confirm,
+input[type="password"] {
+    padding-right: 42px !important;
+}
