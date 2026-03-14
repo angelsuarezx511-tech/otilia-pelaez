@@ -6456,730 +6456,141 @@ function renderAnunciosPublic(){
       +'</div></div></div>';
   }).join('');
 }
-// ════════════════════════════════════════════════════════
-//  MENÚ HAMBURGUESA
-// ════════════════════════════════════════════════════════
-function toggleMobileMenu() {
-    var menu = document.getElementById('mobile-menu');
-    var ham = document.getElementById('nav-hamburger');
-    if (!menu || !ham) return;
-    if (menu.classList.contains('open')) { closeMobileMenu(); }
-    else { menu.classList.add('open'); ham.classList.add('open'); document.body.style.overflow = 'hidden'; }
-}
-function closeMobileMenu() {
-    var menu = document.getElementById('mobile-menu');
-    var ham = document.getElementById('nav-hamburger');
-    if (menu) menu.classList.remove('open');
-    if (ham) ham.classList.remove('open');
-    document.body.style.overflow = '';
-}
+/* ================================================================
+   OTILIA PELÁEZ — Funciones nuevas (sin tocar nada original)
+================================================================ */
 
-// ════════════════════════════════════════════════════════
-//  FAQ TOGGLE
-// ════════════════════════════════════════════════════════
-function toggleFaq(el) { el.classList.toggle('open'); }
+// ── Hamburguesa ──
+function toggleMobileMenu(){var m=document.getElementById('mobile-menu'),h=document.getElementById('nav-hamburger');if(!m||!h)return;if(m.classList.contains('open')){closeMobileMenu();}else{m.classList.add('open');h.classList.add('open');document.body.style.overflow='hidden';}}
+function closeMobileMenu(){var m=document.getElementById('mobile-menu'),h=document.getElementById('nav-hamburger');if(m)m.classList.remove('open');if(h)h.classList.remove('open');document.body.style.overflow='';}
 
-// ════════════════════════════════════════════════════════
-//  RENDER SECCIONES PÚBLICAS
-// ════════════════════════════════════════════════════════
-function renderNoticiasPublicas() {
-    var grid = document.getElementById('noticias-publicas-grid');
-    if (!grid) return;
-    var noticias = (APP.noticias || []);
-    if (!noticias.length) {
-        grid.innerHTML = '<div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:44px;margin-bottom:10px;">📰</div><p>No hay noticias publicadas aún.</p></div>';
-        return;
-    }
-    grid.innerHTML = noticias.map(function(n) {
-        return '<div class="noticia-card"><div class="noticia-img">' + (n.emoji || '📰') + '</div>'
-            + '<div class="noticia-body"><div class="noticia-fecha">' + (n.fecha || '') + '</div>'
-            + '<h4>' + (n.titulo || '') + '</h4><p>' + (n.resumen || '') + '</p></div></div>';
-    }).join('');
-}
+// ── FAQ ──
+function toggleFaq(el){el.classList.toggle('open');}
 
-function renderDocentesDestacados() {
-    var grid = document.getElementById('docentes-destacados-grid');
-    if (!grid) return;
-    var d = (APP.docentesDestacados || []);
-    if (!d.length) {
-        grid.innerHTML = '<div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:44px;margin-bottom:10px;">👨‍🏫</div><p>El admin puede agregar docentes desde el panel.</p></div>';
-        return;
-    }
-    grid.innerHTML = d.map(function(x) {
-        return '<div class="docente-card"><div class="docente-avatar">' + (x.emoji || '👨‍🏫') + '</div>'
-            + '<div class="docente-nombre">' + (x.nombre || '') + '</div>'
-            + '<div class="docente-materia">' + (x.materia || '') + '</div>'
-            + '<div class="docente-grado">' + (x.grado || '') + '</div></div>';
-    }).join('');
-}
+// ── Backdrop dropdowns ──
+(function(){var bd=document.createElement('div');bd.id='dropdown-backdrop';bd.onclick=function(){document.querySelectorAll('.dropdown-menu.open').forEach(function(m){m.classList.remove('open');});bd.classList.remove('show');};document.body.appendChild(bd);})();
 
-function renderComunicadosPublicos() {
-    var list = document.getElementById('comunicados-publicos-list');
-    if (!list) return;
-    var c = (APP.comunicados || []);
-    if (!c.length) {
-        list.innerHTML = '<div style="text-align:center;padding:40px;color:#bbb;"><div style="font-size:44px;margin-bottom:10px;">📋</div><p>No hay comunicados aún.</p></div>';
-        return;
-    }
-    list.innerHTML = c.map(function(x) {
-        return '<div class="comunicado-card"><div class="comunicado-icon">' + (x.emoji || '📋') + '</div>'
-            + '<div class="comunicado-body"><h4>' + (x.titulo || '') + '</h4>'
-            + '<p>' + (x.texto || '') + '</p>'
-            + '<div class="comunicado-fecha">' + (x.fecha || '') + '</div></div></div>';
-    }).join('');
-}
-
-function renderFaqExtra() {
-    var el = document.getElementById('faq-extra-list');
-    if (!el) return;
-    var f = (APP.faqExtra || []);
-    el.innerHTML = f.map(function(x) {
-        return '<div class="faq-item" onclick="toggleFaq(this)">'
-            + '<div class="faq-pregunta">' + (x.pregunta || '') + ' <span class="faq-arrow">▼</span></div>'
-            + '<div class="faq-respuesta">' + (x.respuesta || '') + '</div></div>';
-    }).join('');
-}
-
-// Render al cargar
-setTimeout(function() {
-    renderNoticiasPublicas();
-    renderDocentesDestacados();
-    renderComunicadosPublicos();
-    renderFaqExtra();
-}, 1000);
-
-// ════════════════════════════════════════════════════════
-//  PANEL ADMIN — Gestión de contenido
-// ════════════════════════════════════════════════════════
-function _openGenerico(title, bodyHtml) {
-    var t = document.getElementById('modal-generico-title');
-    var b = document.getElementById('modal-generico-body');
-    if (t) t.textContent = title;
-    if (b) b.innerHTML = bodyHtml;
-    openModal('modal-generico');
-}
-
-var _estiloInput = 'width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;';
-var _estiloLabel = 'display:block;font-size:11px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase;';
-
-function openAdminNoticias() {
-    _openGenerico('📰 Noticias del Centro',
-        '<div id="noticias-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;min-height:30px;"></div>'
-        + '<div style="background:#f8fafc;border-radius:12px;padding:16px;border:1.5px dashed #ddd;">'
-        + '<h4 style="margin:0 0 12px;color:#0f1c3a;font-size:14px;font-weight:800;">➕ Agregar Noticia</h4>'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">'
-        + '<div><label style="' + _estiloLabel + '">Ícono</label><input type="text" id="not-emoji" placeholder="📰" maxlength="4" style="' + _estiloInput + '"></div>'
-        + '<div><label style="' + _estiloLabel + '">Fecha</label><input type="date" id="not-fecha" style="' + _estiloInput + '"></div>'
-        + '</div>'
-        + '<div style="margin-bottom:10px;"><label style="' + _estiloLabel + '">Título *</label><input type="text" id="not-titulo" placeholder="Título de la noticia..." style="' + _estiloInput + '"></div>'
-        + '<div style="margin-bottom:12px;"><label style="' + _estiloLabel + '">Resumen</label><textarea id="not-resumen" rows="2" placeholder="Descripción breve..." style="' + _estiloInput + 'resize:none;"></textarea></div>'
-        + '<button class="btn btn-gold" onclick="saveNoticia()" style="width:100%;">💾 Guardar Noticia</button>'
-        + '</div>'
-    );
-    renderNoticiasAdminList();
-}
-function renderNoticiasAdminList() {
-    var el = document.getElementById('noticias-admin-list');
-    if (!el) return;
-    var n = (APP.noticias || []);
-    if (!n.length) { el.innerHTML = '<p style="color:#bbb;text-align:center;font-size:13px;padding:8px;">No hay noticias.</p>'; return; }
-    el.innerHTML = n.map(function(x, i) {
-        return '<div style="background:white;border-radius:9px;padding:10px 14px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
-            + '<div><span style="font-size:18px;margin-right:8px;">' + (x.emoji || '📰') + '</span><strong style="font-size:13px;">' + x.titulo + '</strong>'
-            + '<span style="color:#bbb;font-size:11px;margin-left:6px;">' + (x.fecha || '') + '</span></div>'
-            + '<button onclick="deleteNoticia(' + i + ')" style="background:#fee2e2;border:none;border-radius:7px;padding:4px 10px;cursor:pointer;color:#dc2626;font-weight:700;font-size:12px;">🗑️</button></div>';
-    }).join('');
-}
-function saveNoticia() {
-    var titulo = (document.getElementById('not-titulo') || {}).value.trim();
-    var resumen = (document.getElementById('not-resumen') || {}).value.trim();
-    var emoji = (document.getElementById('not-emoji') || {}).value.trim() || '📰';
-    var fechaRaw = (document.getElementById('not-fecha') || {}).value;
-    if (!titulo) { toast('El título es obligatorio', 'error'); return; }
-    if (!APP.noticias) APP.noticias = [];
-    var fecha = fechaRaw ? new Date(fechaRaw + 'T12:00').toLocaleDateString('es-DO') : '';
-    APP.noticias.unshift({ titulo: titulo, resumen: resumen, emoji: emoji, fecha: fecha });
-    persistSave(); renderNoticiasAdminList(); renderNoticiasPublicas();
-    ['not-titulo', 'not-resumen', 'not-emoji', 'not-fecha'].forEach(function(id) { var e = document.getElementById(id); if (e) e.value = ''; });
-    toast('✅ Noticia publicada', 'success');
-}
-function deleteNoticia(i) {
-    if (!confirm('¿Eliminar esta noticia?')) return;
-    APP.noticias.splice(i, 1); persistSave(); renderNoticiasAdminList(); renderNoticiasPublicas();
-    toast('Noticia eliminada', 'info');
-}
-
-function openAdminDocentes() {
-    _openGenerico('👨‍🏫 Equipo Docente',
-        '<div id="docentes-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;min-height:30px;"></div>'
-        + '<div style="background:#f8fafc;border-radius:12px;padding:16px;border:1.5px dashed #ddd;">'
-        + '<h4 style="margin:0 0 12px;color:#0f1c3a;font-size:14px;font-weight:800;">➕ Agregar Docente</h4>'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">'
-        + '<div><label style="' + _estiloLabel + '">Ícono</label><input type="text" id="doc-emoji" placeholder="👨‍🏫" maxlength="4" style="' + _estiloInput + '"></div>'
-        + '<div><label style="' + _estiloLabel + '">Nombre *</label><input type="text" id="doc-nombre" placeholder="Prof. Juan Pérez" style="' + _estiloInput + '"></div>'
-        + '<div><label style="' + _estiloLabel + '">Materia *</label><input type="text" id="doc-materia" placeholder="Matemáticas" style="' + _estiloInput + '"></div>'
-        + '<div><label style="' + _estiloLabel + '">Nivel/Grado</label><input type="text" id="doc-grado" placeholder="Secundaria" style="' + _estiloInput + '"></div>'
-        + '</div>'
-        + '<button class="btn btn-gold" onclick="saveDocente()" style="width:100%;margin-top:4px;">💾 Guardar</button>'
-        + '</div>'
-    );
-    renderDocentesAdminList();
-}
-function renderDocentesAdminList() {
-    var el = document.getElementById('docentes-admin-list');
-    if (!el) return;
-    var d = (APP.docentesDestacados || []);
-    if (!d.length) { el.innerHTML = '<p style="color:#bbb;text-align:center;font-size:13px;padding:8px;">No hay docentes.</p>'; return; }
-    el.innerHTML = d.map(function(x, i) {
-        return '<div style="background:white;border-radius:9px;padding:10px 14px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
-            + '<div><span style="font-size:18px;margin-right:8px;">' + (x.emoji || '👨‍🏫') + '</span><strong style="font-size:13px;">' + x.nombre + '</strong>'
-            + ' · <span style="color:#b8963e;font-size:12px;">' + (x.materia || '') + '</span></div>'
-            + '<button onclick="deleteDocente(' + i + ')" style="background:#fee2e2;border:none;border-radius:7px;padding:4px 10px;cursor:pointer;color:#dc2626;font-weight:700;font-size:12px;">🗑️</button></div>';
-    }).join('');
-}
-function saveDocente() {
-    var nombre = (document.getElementById('doc-nombre') || {}).value.trim();
-    var materia = (document.getElementById('doc-materia') || {}).value.trim();
-    var emoji = (document.getElementById('doc-emoji') || {}).value.trim() || '👨‍🏫';
-    var grado = (document.getElementById('doc-grado') || {}).value.trim();
-    if (!nombre || !materia) { toast('Nombre y materia son obligatorios', 'error'); return; }
-    if (!APP.docentesDestacados) APP.docentesDestacados = [];
-    APP.docentesDestacados.push({ nombre: nombre, materia: materia, emoji: emoji, grado: grado });
-    persistSave(); renderDocentesAdminList(); renderDocentesDestacados();
-    ['doc-nombre', 'doc-materia', 'doc-emoji', 'doc-grado'].forEach(function(id) { var e = document.getElementById(id); if (e) e.value = ''; });
-    toast('✅ Docente agregado', 'success');
-}
-function deleteDocente(i) {
-    if (!confirm('¿Eliminar?')) return;
-    APP.docentesDestacados.splice(i, 1); persistSave(); renderDocentesAdminList(); renderDocentesDestacados();
-    toast('Eliminado', 'info');
-}
-
-function openAdminComunicados() {
-    _openGenerico('📋 Comunicados Oficiales',
-        '<div id="comunicados-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;min-height:30px;"></div>'
-        + '<div style="background:#f8fafc;border-radius:12px;padding:16px;border:1.5px dashed #ddd;">'
-        + '<h4 style="margin:0 0 12px;color:#0f1c3a;font-size:14px;font-weight:800;">➕ Nuevo Comunicado</h4>'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">'
-        + '<div><label style="' + _estiloLabel + '">Ícono</label><input type="text" id="com-emoji" placeholder="📋" maxlength="4" style="' + _estiloInput + '"></div>'
-        + '<div><label style="' + _estiloLabel + '">Fecha</label><input type="date" id="com-fecha" style="' + _estiloInput + '"></div>'
-        + '</div>'
-        + '<div style="margin-bottom:10px;"><label style="' + _estiloLabel + '">Título *</label><input type="text" id="com-titulo" placeholder="Asunto..." style="' + _estiloInput + '"></div>'
-        + '<div style="margin-bottom:12px;"><label style="' + _estiloLabel + '">Contenido *</label><textarea id="com-texto" rows="3" placeholder="Texto del comunicado..." style="' + _estiloInput + 'resize:none;"></textarea></div>'
-        + '<button class="btn btn-gold" onclick="saveComunicado()" style="width:100%;">💾 Publicar</button>'
-        + '</div>'
-    );
-    renderComunicadosAdminList();
-}
-function renderComunicadosAdminList() {
-    var el = document.getElementById('comunicados-admin-list');
-    if (!el) return;
-    var c = (APP.comunicados || []);
-    if (!c.length) { el.innerHTML = '<p style="color:#bbb;text-align:center;font-size:13px;padding:8px;">No hay comunicados.</p>'; return; }
-    el.innerHTML = c.map(function(x, i) {
-        return '<div style="background:white;border-radius:9px;padding:10px 14px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
-            + '<div><span style="font-size:18px;margin-right:8px;">' + (x.emoji || '📋') + '</span><strong style="font-size:13px;">' + x.titulo + '</strong>'
-            + '<span style="color:#bbb;font-size:11px;margin-left:6px;">' + (x.fecha || '') + '</span></div>'
-            + '<button onclick="deleteComunicado(' + i + ')" style="background:#fee2e2;border:none;border-radius:7px;padding:4px 10px;cursor:pointer;color:#dc2626;font-weight:700;font-size:12px;">🗑️</button></div>';
-    }).join('');
-}
-function saveComunicado() {
-    var titulo = (document.getElementById('com-titulo') || {}).value.trim();
-    var texto = (document.getElementById('com-texto') || {}).value.trim();
-    var emoji = (document.getElementById('com-emoji') || {}).value.trim() || '📋';
-    var fechaRaw = (document.getElementById('com-fecha') || {}).value;
-    if (!titulo || !texto) { toast('Título y contenido son obligatorios', 'error'); return; }
-    if (!APP.comunicados) APP.comunicados = [];
-    var fecha = fechaRaw ? new Date(fechaRaw + 'T12:00').toLocaleDateString('es-DO') : '';
-    APP.comunicados.unshift({ titulo: titulo, texto: texto, emoji: emoji, fecha: fecha });
-    persistSave(); renderComunicadosAdminList(); renderComunicadosPublicos();
-    toast('✅ Comunicado publicado', 'success');
-}
-function deleteComunicado(i) {
-    if (!confirm('¿Eliminar?')) return;
-    APP.comunicados.splice(i, 1); persistSave(); renderComunicadosAdminList(); renderComunicadosPublicos();
-    toast('Eliminado', 'info');
-}
-
-function openAdminFaq() {
-    _openGenerico('❓ Preguntas Frecuentes',
-        '<div id="faq-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;min-height:30px;"></div>'
-        + '<div style="background:#f8fafc;border-radius:12px;padding:16px;border:1.5px dashed #ddd;">'
-        + '<h4 style="margin:0 0 12px;color:#0f1c3a;font-size:14px;font-weight:800;">➕ Nueva Pregunta</h4>'
-        + '<div style="margin-bottom:10px;"><label style="' + _estiloLabel + '">Pregunta *</label><input type="text" id="faq-p-in" placeholder="¿Cuándo son las inscripciones?" style="' + _estiloInput + '"></div>'
-        + '<div style="margin-bottom:12px;"><label style="' + _estiloLabel + '">Respuesta *</label><textarea id="faq-r-in" rows="3" placeholder="Respuesta..." style="' + _estiloInput + 'resize:none;"></textarea></div>'
-        + '<button class="btn btn-gold" onclick="saveFaqItem()" style="width:100%;">💾 Agregar</button>'
-        + '</div>'
-    );
-    renderFaqAdminList();
-}
-function renderFaqAdminList() {
-    var el = document.getElementById('faq-admin-list');
-    if (!el) return;
-    var f = (APP.faqExtra || []);
-    if (!f.length) { el.innerHTML = '<p style="color:#bbb;text-align:center;font-size:13px;padding:8px;">No hay preguntas extra.</p>'; return; }
-    el.innerHTML = f.map(function(x, i) {
-        return '<div style="background:white;border-radius:9px;padding:10px 14px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
-            + '<div style="font-size:13px;color:#0f1c3a;font-weight:600;">❓ ' + (x.pregunta || '') + '</div>'
-            + '<button onclick="deleteFaqItem(' + i + ')" style="background:#fee2e2;border:none;border-radius:7px;padding:4px 10px;cursor:pointer;color:#dc2626;font-weight:700;font-size:12px;flex-shrink:0;">🗑️</button></div>';
-    }).join('');
-}
-function saveFaqItem() {
-    var p = (document.getElementById('faq-p-in') || {}).value.trim();
-    var r = (document.getElementById('faq-r-in') || {}).value.trim();
-    if (!p || !r) { toast('Pregunta y respuesta son obligatorias', 'error'); return; }
-    if (!APP.faqExtra) APP.faqExtra = [];
-    APP.faqExtra.push({ pregunta: p, respuesta: r });
-    persistSave(); renderFaqAdminList(); renderFaqExtra();
-    var ep = document.getElementById('faq-p-in'); if (ep) ep.value = '';
-    var er = document.getElementById('faq-r-in'); if (er) er.value = '';
-    toast('✅ Pregunta agregada', 'success');
-}
-function deleteFaqItem(i) {
-    if (!confirm('¿Eliminar?')) return;
-    APP.faqExtra.splice(i, 1); persistSave(); renderFaqAdminList(); renderFaqExtra();
-    toast('Eliminada', 'info');
-}
-
-// ════════════════════════════════════════════════════════════════
-//  CORRECCIÓN DE ERRORES — Funciones faltantes
-// ════════════════════════════════════════════════════════════════
-
-// showCatRole — faltaba completamente
-function showCatRole(role, btn) {
-    document.querySelectorAll('.cat-role-pane').forEach(function(p) { p.style.display = 'none'; });
-    var el = document.getElementById('cat-role-' + role);
-    if (el) el.style.display = 'block';
-    document.querySelectorAll('.cat-role-tab').forEach(function(b) {
-        b.style.background = 'white';
-        b.style.color = '#888';
-        b.style.borderColor = 'var(--border)';
-    });
-    if (btn) {
-        btn.style.background = 'var(--gold)';
-        btn.style.color = 'var(--navy)';
-        btn.style.borderColor = 'var(--gold)';
-    }
-}
-
-// addCategoria — faltaba completamente
-function addCategoria() {
-    var nombre = prompt('Nombre de la nueva categoría:');
-    if (!nombre || !nombre.trim()) return;
-    var icono = prompt('Ícono (emoji):', '📁') || '📁';
-    if (!APP.categoriasConfig) APP.categoriasConfig = { sitio: [], estudiante: [], padre: [], profe: [] };
-    APP.categoriasConfig.sitio.push({
-        id: 'cat-custom-' + Date.now(),
-        nombre: nombre.trim(),
-        icono: icono,
-        activa: true,
-        custom: true,
-        fields: []
-    });
-    persistSave();
-    if (typeof initCategoriasAdmin === 'function') initCategoriasAdmin();
-    toast('✅ Categoría "' + nombre.trim() + '" agregada', 'success');
-}
-
-// ════════════════════════════════════════════════════════════════
-//  BOT MEJORADO — IA Real via Anthropic API
-// ════════════════════════════════════════════════════════════════
-
-// Contexto del centro para el bot IA
-var _botContexto = [
-    'Eres el asistente virtual del Centro Educativo Otilia Peláez, ubicado en Av. Charles de Gaulle, Sabana Perdida, Santo Domingo Norte, República Dominicana.',
-    'El centro fue fundado en 1978 y pertenece al Distrito Educativo 10-02 del MINERD.',
-    'Teléfono: (809) 590-0771. WhatsApp: +1 (809) 590-0771. Email: otiliapelaezadm@gmail.com.',
-    'Horario: Lunes a Viernes 7:30 AM – 4:30 PM.',
-    'Ofrece niveles: Primaria (1°-6°) y Secundaria (1°-6°) con bachilleratos técnicos.',
-    'Nota mínima aprobatoria: 65. Cuadro de Honor: 90+. Boletines trimestrales.',
-    'Programas: Ciencias de la Salud, Informática, Contabilidad, Educación, Turismo Hotelero.',
-    'Administrado por las Hermanas de San Pablo desde su fundación.',
-    'Responde siempre en español dominicano, de forma amable, breve y directa.',
-    'Si no sabes algo específico del centro, redirige al teléfono o a secretaría.',
-    'Nunca inventes datos. Si es algo de notas o datos personales, di que lo vean en su portal.'
-].join(' ');
-
-var _botUsandoIA = false;
-
-async function fabProcessIA(role, msg) {
-    var bc = APP.botConfig;
-    // Verificar si tiene la función IA activada
-    if (!bc || !bc.autoIa || !bc.iaKey) {
-        fabProcess(role, msg);
-        return;
-    }
-    
-    _botUsandoIA = true;
-    var pfx = FAB_PFX[role];
-    
-    // Mostrar indicador de escritura
-    var msgsEl = document.getElementById(pfx + '-msgs');
-    var typingId = 'typing-' + Date.now();
-    if (msgsEl) {
-        msgsEl.innerHTML += '<div id="' + typingId + '" style="display:flex;gap:8px;align-items:flex-end;">'
-            + '<div style="width:28px;height:28px;background:#d4af37;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;">🤖</div>'
-            + '<div style="background:#f0f4ff;border-radius:14px 14px 14px 2px;padding:10px 13px;">'
-            + '<span style="display:flex;gap:4px;align-items:center;">'
-            + '<span style="width:7px;height:7px;background:#d4af37;border-radius:50%;animation:typingDot 1s infinite;"></span>'
-            + '<span style="width:7px;height:7px;background:#d4af37;border-radius:50%;animation:typingDot 1s 0.2s infinite;"></span>'
-            + '<span style="width:7px;height:7px;background:#d4af37;border-radius:50%;animation:typingDot 1s 0.4s infinite;"></span>'
-            + '</span></div></div>';
-        msgsEl.scrollTop = msgsEl.scrollHeight;
-    }
-
-    // Construir historial
-    var history = (fabHistory[role] || []).slice(-8).map(function(m) {
-        return { role: m.from === 'user' ? 'user' : 'assistant', content: m.text };
-    });
-
-    try {
-        var resp = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-api-key': bc.iaKey, 'anthropic-version': '2023-06-01' },
-            body: JSON.stringify({
-                model: 'claude-haiku-4-5-20251001',
-                max_tokens: 300,
-                system: _botContexto,
-                messages: history.concat([{ role: 'user', content: msg }])
-            })
-        });
-        var data = await resp.json();
-        var typing = document.getElementById(typingId);
-        if (typing) typing.remove();
-        var answer = (data.content && data.content[0] && data.content[0].text) || 'Lo siento, no pude procesar tu consulta. Intenta de nuevo.';
-        fabAddMsg(role, 'bot', answer);
-        fabRenderQR(role, ['👍 Entendido', '¿Algo más?', '📍 Contacto']);
-    } catch (e) {
-        var typing = document.getElementById(typingId);
-        if (typing) typing.remove();
-        // Fallback al bot local
-        fabProcess(role, msg);
-    }
-    _botUsandoIA = false;
-}
-
-// Sobrescribir roleFabSend para usar IA si está activada
-var _origRoleFabSend = roleFabSend;
-roleFabSend = function(role) {
-    var pfx = FAB_PFX[role];
-    var inp = document.getElementById(pfx + '-inp');
-    var msg = inp && inp.value.trim();
-    if (!msg) return;
-    if (inp) inp.value = '';
-    fabAddMsg(role, 'user', msg);
-    fabRenderQR(role, []);
-    var bc = APP.botConfig;
-    var delay = (bc && bc.delay) || 600;
-    if (bc && bc.autoIa && bc.iaKey) {
-        setTimeout(function() { fabProcessIA(role, msg); }, delay);
-    } else {
-        setTimeout(function() { fabProcess(role, msg); }, delay);
-    }
-};
-
-// Sobrescribir fabQuickReply para usar IA si está activada
-var _origFabQuickReply = fabQuickReply;
-fabQuickReply = function(role, text) {
-    fabAddMsg(role, 'user', text);
-    fabRenderQR(role, []);
-    var bc = APP.botConfig;
-    var delay = (bc && bc.delay) || 600;
-    if (bc && bc.autoIa && bc.iaKey) {
-        setTimeout(function() { fabProcessIA(role, text); }, delay);
-    } else {
-        setTimeout(function() { fabProcess(role, text); }, delay);
-    }
-};
-
-// Sobrescribir sendChat (bot de estudiantes) para usar IA
-var _origSendChat = sendChat;
-sendChat = function() {
-    var inp = document.getElementById('chat-input');
-    if (!inp) return;
-    var msg = inp.value.trim();
-    if (!msg) return;
-    addChatMsg('user', msg);
-    inp.value = '';
-    renderQuickReplies([]);
-    var bc = APP.botConfig;
-    var delay = (bc && bc.delay) || 600;
-    if (bc && bc.autoIa && bc.iaKey) {
-        setTimeout(function() { sendChatIA(msg); }, delay);
-    } else {
-        setTimeout(function() { processChatMsg(msg); }, delay);
-    }
-};
-
-async function sendChatIA(msg) {
-    var bc = APP.botConfig;
-    if (!bc || !bc.autoIa || !bc.iaKey) { processChatMsg(msg); return; }
-    
-    // Indicador de escritura
-    var chatMsgs = document.getElementById('chat-messages');
-    var tid = 'ct-' + Date.now();
-    if (chatMsgs) {
-        chatMsgs.innerHTML += '<div id="' + tid + '" class="chat-msg bot-msg" style="display:flex;gap:6px;align-items:flex-end;">'
-            + '<div style="width:26px;height:26px;background:#d4af37;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">' + (bc.emoji || '🤖') + '</div>'
-            + '<div style="background:#f0f4ff;border-radius:12px;padding:8px 12px;">'
-            + '<span style="display:flex;gap:3px;"><span style="width:6px;height:6px;background:#d4af37;border-radius:50%;animation:typingDot 1s infinite;"></span>'
-            + '<span style="width:6px;height:6px;background:#d4af37;border-radius:50%;animation:typingDot 1s 0.2s infinite;"></span>'
-            + '<span style="width:6px;height:6px;background:#d4af37;border-radius:50%;animation:typingDot 1s 0.4s infinite;"></span></span></div></div>';
-        chatMsgs.scrollTop = chatMsgs.scrollHeight;
-    }
-
-    var studentCtx = _botContexto;
-    if (APP.currentUser && APP.currentUser.role === 'estudiante') {
-        var st = APP.students && APP.students.find(function(s) { return s.email === APP.currentUser.email; });
-        if (st) studentCtx += ' El estudiante se llama ' + st.nombre + ' ' + st.apellido + ', está en ' + (st.grado || 'un grado') + '.';
-    }
-
-    try {
-        var resp = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-api-key': bc.iaKey, 'anthropic-version': '2023-06-01' },
-            body: JSON.stringify({
-                model: 'claude-haiku-4-5-20251001',
-                max_tokens: 280,
-                system: studentCtx,
-                messages: [{ role: 'user', content: msg }]
-            })
-        });
-        var data = await resp.json();
-        var typing = document.getElementById(tid);
-        if (typing) typing.remove();
-        var answer = (data.content && data.content[0] && data.content[0].text) || 'No pude procesar tu consulta. Intenta de nuevo.';
-        addChatMsg('bot', answer);
-        renderQuickReplies(['📝 Inscripciones', '📋 Mis notas', '⏰ Horario', '📍 Contacto']);
-    } catch (e) {
-        var typing = document.getElementById(tid);
-        if (typing) typing.remove();
-        processChatMsg(msg);
-    }
-}
-
-// ════════════════════════════════════════════════════════════════
-//  BOT — Más respuestas y funciones reales de datos
-// ════════════════════════════════════════════════════════════════
-
-// Expandir KB_PADRE con más respuestas
-Object.assign(KB_PADRE, {
-    pago:     { k: ['pago', 'cuota', 'mensualidad', 'dinero', 'precio', 'costo', 'tarifa'], r: '💰 Las tarifas están disponibles en la sección **"Tarifas"** del menú. También puede consultarlas en secretaría del centro. Pagos: lunes a viernes 7:30 AM – 4:30 PM.' },
-    galeria:  { k: ['foto', 'galeria', 'fotos', 'imagen', 'actividad', 'evento'], r: '📸 Las fotos de actividades del centro están en la sección **"Galería"** del menú principal. El admin la actualiza regularmente con eventos y actividades.' },
-    docente:  { k: ['maestro', 'profesor', 'docente', 'director'], r: '👨‍🏫 Para contactar a un maestro, use la sección **"Mensajes"** de su portal de padre. También puede visitar el centro en horario escolar: lunes–viernes 7:30 AM – 4:30 PM.' },
-    rendimiento: { k: ['promedio', 'rendimiento', 'cuadro de honor', 'meritorio', 'notas de mi hijo'], r: '📊 Para ver el rendimiento de su hijo/a, vaya a la pestaña **"Notas"** de su portal. Escalas: 0-64 No aprobado · 65-69 Mínimo · 70-79 Bueno · 80-89 Meritorio · 90-100 Cuadro de Honor.' },
-    orientacion: { k: ['orientacion', 'orientador', 'psicologico', 'bullying', 'problema'], r: '🤝 El centro cuenta con servicio de orientación escolar. Puede solicitar una cita llamando al **(809) 590-0771** o acercándose a secretaría. La orientadora atiende de lunes a viernes.' },
-    transporte: { k: ['transporte', 'bus', 'ruta', 'guagua'], r: '🚌 El centro no tiene transporte propio actualmente. Existen rutas de transporte público por la Av. Charles de Gaulle. Para más información, llame al **(809) 590-0771**.' },
-    comedor: { k: ['comedor', 'almuerzo', 'comida', 'lonchera', 'merienda'], r: '🍽️ El centro cuenta con servicio de comedor escolar. Los estudiantes pueden traer su lonchera o utilizar el comedor. Consulte las tarifas en secretaría.' },
-    graduacion: { k: ['graduacion', 'acto', 'diploma', 'ceremonia'], r: '🎓 Las graduaciones se realizan a finales de junio. Los requisitos incluyen: haber completado el nivel, tener todas las materias aprobadas y no tener deudas pendientes con el centro.' }
-});
-
-// Expandir KB_PROFE
-Object.assign(KB_PROFE, {
-    registro: { k: ['registro', 'libro', 'acta', 'expediente'], r: '📚 Los libros de registro deben estar actualizados semanalmente. Las actas se entregan al coordinador al cierre de cada trimestre. Conserve copias de todos los documentos.' },
-    reunion: { k: ['reunion', 'asamblea', 'junta', 'consejo'], r: '🤝 Las reuniones de padres se coordinan a través del sistema de mensajería del portal. También puede usar el módulo de **"Reuniones"** en su panel docente para agendar citas individuales.' },
-    planificacion: { k: ['planificacion', 'plan de clase', 'secuencia', 'unidad'], r: '📝 La planificación curricular debe seguir el Currículo Dominicano Revisado del MINERD. Use la plantilla oficial y présente los planes semanalmente a coordinación. Disponible en: minerd.gob.do' },
-    herramienta: { k: ['herramienta', 'recurso', 'tecnologia', 'plataforma', 'digital'], r: '💻 El MINERD provee la plataforma **AulaDigi** para recursos digitales. También puede usar Google Classroom o Microsoft Teams con autorización del director. Consulte al coordinador de tecnología.' },
-    incidente: { k: ['incidente', 'problema', 'disciplina', 'amonestacion', 'sancion'], r: '⚠️ Los incidentes disciplinarios deben documentarse en el **Registro de Incidentes** del sistema. Notifique al orientador y al director según la gravedad. El reglamento interno define los procedimientos.' },
-    covid: { k: ['enfermedad', 'ausentismo', 'salud', 'enfermeria'], r: '🏥 En caso de enfermedad, el estudiante debe ir a enfermería. Si hay síntomas graves, se notifica al padre inmediatamente. Registre la ausencia en el sistema con el código correspondiente.' }
-});
-
-// Expandir KB_ADMIN  
-Object.assign(KB_ADMIN, {
-    personal: { k: ['personal', 'nomina', 'empleado', 'contratacion', 'recurso humano'], r: '👥 La gestión de personal debe seguir la **Ley 41-00**. Toda contratación requiere aprobación del Distrito Educativo. Los expedientes del personal deben estar actualizados y disponibles para supervisión.' },
-    presupuesto: { k: ['presupuesto', 'fondo', 'financiero', 'presupuestario', 'gasto'], r: '💰 El presupuesto del centro se gestiona según las normativas del MINERD. Los fondos recibidos deben documentarse y rendirse cuenta al Distrito. Para fondos escolares, consulte la Ord. 09-2006.' },
-    infraestructura: { k: ['infraestructura', 'edificio', 'aula', 'reparacion', 'mantenimiento'], r: '🏫 Para reparaciones o mantenimiento, solicite al Distrito Educativo 10-02. Emergencias que afecten la seguridad deben reportarse de inmediato. Documente todas las solicitudes por escrito.' },
-    matricula: { k: ['matricula', 'inscripcion', 'registro', 'documentos', 'requisito'], r: '📝 La matrícula requiere: acta de nacimiento, calificaciones anteriores, cédula del tutor y 2 fotos. El proceso se realiza en secretaría. Registre todo en el sistema para reportes al MINERD.' },
-    inspeccion: { k: ['inspeccion', 'visita', 'auditor', 'supervision', 'inspector'], r: '🔍 Para visitas de supervisión tenga listos: plan operativo anual, registros de asistencia, expedientes de estudiantes, nómina del personal y estado financiero. El Distrito da aviso previo generalmente.' },
-    sisalril: { k: ['seguro', 'seguro medico', 'sisalril', 'salud laboral'], r: '🏥 Los empleados tienen derecho al seguro médico del **SRS (SISALRIL)**. El centro debe estar afiliado al sistema y reportar al TSS mensualmente. Para consultas: tss.gob.do o al 311.' },
-    tecnologia: { k: ['tecnologia', 'sistema', 'plataforma', 'computadora', 'aula virtual'], r: '💻 El MINERD provee tecnología a centros públicos a través del programa de digitalización educativa. Para solicitar equipos o soporte, contacte al Departamento de Tecnología del Distrito 10-02.' }
-});
-
-// ════════════════════════════════════════════════════════════════
-//  NUEVAS FUNCIONES DE ESCUELA
-// ════════════════════════════════════════════════════════════════
-
-// Generador de carnet estudiantil
-function generarCarnet(studentId) {
-    var st = APP.students && APP.students.find(function(s) { return s.id === studentId; });
-    if (!st) { toast('Estudiante no encontrado', 'error'); return; }
-    
-    var w = window.open('', '_blank', 'width=400,height=600');
-    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Carnet - ' + st.nombre + ' ' + st.apellido + '</title>'
-        + '<style>body{margin:0;font-family:Arial,sans-serif;background:#f0f4ff;display:flex;align-items:center;justify-content:center;min-height:100vh;}'
-        + '.carnet{background:white;border-radius:16px;padding:0;width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.2);overflow:hidden;}'
-        + '.header{background:linear-gradient(135deg,#0f1c3a,#1a3a6e);padding:20px;text-align:center;}'
-        + '.header img{width:60px;height:60px;border-radius:50%;border:2px solid #d4af37;}'
-        + '.header h3{color:white;font-size:13px;margin:8px 0 0;}'
-        + '.header p{color:#d4af37;font-size:10px;margin:2px 0 0;}'
-        + '.body{padding:20px;text-align:center;}'
-        + '.avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#0f1c3a,#1a3a6e);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px;border:3px solid #d4af37;}'
-        + '.nombre{font-size:18px;font-weight:800;color:#0f1c3a;margin:0 0 4px;}'
-        + '.dato{font-size:12px;color:#666;margin:2px 0;}'
-        + '.grado{background:#d4af37;color:#0f1c3a;border-radius:20px;padding:4px 16px;font-weight:800;font-size:13px;display:inline-block;margin:8px 0;}'
-        + '.id{font-size:11px;color:#bbb;border-top:1px solid #eee;padding-top:12px;margin-top:12px;}'
-        + '.footer{background:#f8f9fc;padding:12px;text-align:center;font-size:10px;color:#888;border-top:1px solid #eee;}'
-        + '@media print{body{background:white;}.carnet{box-shadow:none;}}'
-        + '</style></head><body>'
-        + '<div class="carnet">'
-        + '<div class="header"><h3>C.E. Otilia Peláez</h3><p>Sabana Perdida, Santo Domingo Norte · Est. 1978</p></div>'
-        + '<div class="body">'
-        + '<div class="avatar">🎓</div>'
-        + '<div class="nombre">' + st.nombre + ' ' + st.apellido + '</div>'
-        + '<div class="grado">' + (st.grado || 'Sin grado') + '</div>'
-        + '<div class="dato">📧 ' + (st.email || '—') + '</div>'
-        + '<div class="dato">📞 ' + (st.telefono || '—') + '</div>'
-        + '<div class="id">ID: ' + st.id + ' · Año Escolar 2025-2026</div>'
-        + '</div>'
-        + '<div class="footer">MINERD · Distrito Educativo 10-02 · (809) 590-0771</div>'
-        + '</div>'
-        + '<script>setTimeout(function(){window.print();},400);<\/script>'
-        + '</body></html>';
-    w.document.write(html);
-    w.document.close();
-}
-
-// Reporte de rendimiento del estudiante
-function generarReporteEstudiante(studentId) {
-    var st = APP.students && APP.students.find(function(s) { return s.id === studentId; });
-    if (!st) { toast('Estudiante no encontrado', 'error'); return; }
-    var notas = (APP.notas || []).filter(function(n) { return n.studentId === st.id; });
-    
-    var w = window.open('', '_blank', 'width=700,height=800');
-    var total = notas.reduce(function(sum, n) { return sum + (parseFloat(n.nota) || 0); }, 0);
-    var promedio = notas.length ? (total / notas.length).toFixed(1) : '—';
-    var estado = parseFloat(promedio) >= 90 ? '🏆 Cuadro de Honor' : parseFloat(promedio) >= 80 ? '⭐ Meritorio' : parseFloat(promedio) >= 65 ? '✅ Aprobado' : '⚠️ En riesgo';
-    
-    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte - ' + st.nombre + '</title>'
-        + '<style>body{font-family:Arial,sans-serif;padding:40px;color:#333;max-width:600px;margin:0 auto;}'
-        + 'h1{color:#0f1c3a;font-size:22px;} h2{color:#0f1c3a;font-size:16px;border-bottom:2px solid #d4af37;padding-bottom:8px;}'
-        + 'table{width:100%;border-collapse:collapse;margin:16px 0;} th{background:#0f1c3a;color:white;padding:8px 12px;text-align:left;font-size:12px;}'
-        + 'td{padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;}'
-        + '.promedio{font-size:32px;font-weight:800;color:#d4af37;} .estado{font-size:14px;margin-top:4px;}'
-        + '.header{display:flex;align-items:center;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fc;border-radius:12px;border-left:4px solid #d4af37;}'
-        + '@media print{body{padding:20px;}}'
-        + '</style></head><body>'
-        + '<div class="header"><div><h1>Reporte Académico</h1><p style="margin:0;color:#888;font-size:13px;">Centro Educativo Otilia Peláez · Año 2025-2026</p></div></div>'
-        + '<h2>Datos del Estudiante</h2>'
-        + '<table><tr><td><strong>Nombre:</strong></td><td>' + st.nombre + ' ' + st.apellido + '</td><td><strong>Grado:</strong></td><td>' + (st.grado || '—') + '</td></tr>'
-        + '<tr><td><strong>ID:</strong></td><td>' + st.id + '</td><td><strong>Email:</strong></td><td>' + (st.email || '—') + '</td></tr></table>'
-        + '<h2>Rendimiento Académico</h2>'
-        + '<div style="text-align:center;padding:20px;background:#f8f9fc;border-radius:12px;margin:16px 0;">'
-        + '<div class="promedio">' + promedio + '</div><div class="estado">' + estado + '</div></div>'
-        + '<table><thead><tr><th>Materia</th><th>Nota</th><th>Trimestre</th><th>Estado</th></tr></thead><tbody>'
-        + (notas.length ? notas.map(function(n) {
-            var nota = parseFloat(n.nota) || 0;
-            var est = nota >= 90 ? '🏆' : nota >= 80 ? '⭐' : nota >= 65 ? '✅' : '❌';
-            return '<tr><td>' + (n.materia || '—') + '</td><td><strong>' + n.nota + '</strong></td><td>' + (n.trimestre || '1°') + '</td><td>' + est + '</td></tr>';
-        }).join('') : '<tr><td colspan="4" style="text-align:center;color:#888;">Sin notas registradas</td></tr>')
-        + '</tbody></table>'
-        + '<p style="font-size:11px;color:#bbb;margin-top:30px;text-align:center;">Generado el ' + new Date().toLocaleDateString('es-DO') + ' · C.E. Otilia Peláez · (809) 590-0771</p>'
-        + '<script>setTimeout(function(){window.print();},400);<\/script>'
-        + '</body></html>';
-    w.document.write(html);
-    w.document.close();
-}
-
-// Estadísticas rápidas del centro
-function getEstadisticasCentro() {
-    var totalEst = (APP.students || []).length;
-    var totalInsc = (APP.inscripciones || []).length;
-    var totalAnn = (APP.announcements || []).length;
-    var notas = (APP.notas || []);
-    var promGeneral = notas.length ? (notas.reduce(function(s, n) { return s + (parseFloat(n.nota) || 0); }, 0) / notas.length).toFixed(1) : '—';
-    var ausencias = (APP.ausencias || []).length;
-    var pendientes = (APP.ausencias || []).filter(function(a) { return a.status === 'pending'; }).length;
-    var mensajes = (APP.mensajes || []).length;
-    return { totalEst: totalEst, totalInsc: totalInsc, totalAnn: totalAnn, promGeneral: promGeneral, ausencias: ausencias, pendientes: pendientes, mensajes: mensajes };
-}
-
-// Notificación masiva mejorada
-function enviarNotificacionMasiva(titulo, mensaje, tipo) {
-    if (!titulo || !mensaje) { toast('Título y mensaje son requeridos', 'error'); return; }
-    if (!APP.notificaciones) APP.notificaciones = [];
-    var notif = {
-        id: 'N-' + Date.now(),
-        titulo: titulo,
-        mensaje: mensaje,
-        tipo: tipo || 'info',
-        fecha: new Date().toLocaleDateString('es-DO'),
-        hora: new Date().toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
-        leida: false
-    };
-    APP.notificaciones.unshift(notif);
-    persistSave();
-    toast('✅ Notificación enviada a todos los usuarios', 'success');
-    return notif;
-}
-
-// Animación de puntos de escritura del bot
-var _botTypingStyle = document.createElement('style');
-_botTypingStyle.textContent = '@keyframes typingDot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}';
-document.head.appendChild(_botTypingStyle);
-
-
-// ════════════════════════════════════════════════════════
-//  FIX DROPDOWNS EN MÓVIL — backdrop + cierre táctil
-// ════════════════════════════════════════════════════════
-
-// Crear backdrop si no existe
-(function() {
-    if (!document.getElementById('dropdown-backdrop')) {
-        var bd = document.createElement('div');
-        bd.id = 'dropdown-backdrop';
-        bd.onclick = function() { closeAllDropdowns(); };
-        document.body.appendChild(bd);
-    }
-})();
-
-function closeAllDropdowns() {
-    document.querySelectorAll('.dropdown-menu.open').forEach(function(m) { m.classList.remove('open'); });
-    var bd = document.getElementById('dropdown-backdrop');
-    if (bd) bd.classList.remove('show');
-}
-
-// Sobrescribir el buildNavbar para mejorar dropdowns en móvil
-var _origBuildNavbar = buildNavbar;
-buildNavbar = function(role) {
-    _origBuildNavbar(role);
-    // Re-attach dropdown events con backdrop
-    setTimeout(function() {
-        document.querySelectorAll('.dropdown-trigger').forEach(function(btn) {
-            btn.onclick = function(e) {
+// Mejorar dropdowns con backdrop
+var _oBN=buildNavbar;
+buildNavbar=function(role){
+    _oBN(role);
+    setTimeout(function(){
+        document.querySelectorAll('.dropdown-trigger').forEach(function(btn){
+            btn.onclick=function(e){
                 e.stopPropagation();
-                var menu = this.nextElementSibling;
-                var isOpen = menu.classList.contains('open');
-                closeAllDropdowns();
-                if (!isOpen) {
-                    menu.classList.add('open');
-                    var bd = document.getElementById('dropdown-backdrop');
-                    if (bd) bd.classList.add('show');
-                }
+                var menu=this.nextElementSibling;
+                var open=menu&&menu.classList.contains('open');
+                document.querySelectorAll('.dropdown-menu.open').forEach(function(m){m.classList.remove('open');});
+                var bd=document.getElementById('dropdown-backdrop');
+                if(!open&&menu){menu.classList.add('open');if(bd)bd.classList.add('show');}
+                else{if(bd)bd.classList.remove('show');}
             };
         });
-    }, 100);
+    },50);
 };
-
-// Cerrar dropdowns al hacer click fuera
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.nav-dropdown')) {
-        closeAllDropdowns();
+document.addEventListener('click',function(e){
+    if(!e.target.closest||!e.target.closest('.nav-dropdown')){
+        document.querySelectorAll('.dropdown-menu.open').forEach(function(m){m.classList.remove('open');});
+        var bd=document.getElementById('dropdown-backdrop');if(bd)bd.classList.remove('show');
     }
 });
 
-// ════════════════════════════════════════════════════════
-//  FIX LOGIN — centrar botones
-// ════════════════════════════════════════════════════════
-// Esperar que el DOM esté listo y centrar los botones del login
-document.addEventListener('DOMContentLoaded', function() {
-    // Asegurar que los botones del login estén centrados
-    var loginBtns = document.querySelectorAll('#login-form-wrap .btn');
-    loginBtns.forEach(function(btn) {
-        btn.style.textAlign = 'center';
-        btn.style.justifyContent = 'center';
-        btn.style.display = 'flex';
-        btn.style.width = '100%';
-        btn.style.alignItems = 'center';
-        btn.style.boxSizing = 'border-box';
+// ── Fix botón Entrar maestros ──
+document.addEventListener('DOMContentLoaded',function(){
+    var btn=document.getElementById('prof-modal-btn');
+    if(btn){btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();doProfesorLogin();});}
+    // Centrar botones login
+    document.querySelectorAll('#login-form-wrap .btn,#register-form-wrap .btn').forEach(function(b){
+        b.style.cssText+='display:flex!important;width:100%!important;justify-content:center!important;align-items:center!important;text-align:center!important;box-sizing:border-box!important;';
     });
+});
+
+// ── Funciones faltantes ──
+function showCatRole(role,btn){
+    document.querySelectorAll('.cat-role-pane').forEach(function(p){p.style.display='none';});
+    var el=document.getElementById('cat-role-'+role);if(el)el.style.display='block';
+    document.querySelectorAll('.cat-role-tab').forEach(function(b){b.style.background='white';b.style.color='#888';b.style.borderColor='var(--border)';});
+    if(btn){btn.style.background='var(--gold)';btn.style.color='var(--navy)';btn.style.borderColor='var(--gold)';}
+}
+function addCategoria(){
+    var n=prompt('Nombre de la categoría:');if(!n||!n.trim())return;
+    var i=prompt('Ícono (emoji):','📁')||'📁';
+    if(!APP.categoriasConfig)APP.categoriasConfig={sitio:[],estudiante:[],padre:[],profe:[]};
+    APP.categoriasConfig.sitio.push({id:'cc-'+Date.now(),nombre:n.trim(),icono:i,activa:true,custom:true,fields:[]});
+    persistSave();if(typeof initCategoriasAdmin==='function')initCategoriasAdmin();
+    toast('✅ Categoría "'+n.trim()+'" agregada','success');
+}
+
+// ── Datos nuevas secciones ──
+if(!APP.noticias)APP.noticias=[];
+if(!APP.comunicados)APP.comunicados=[];
+if(!APP.faqExtra)APP.faqExtra=[];
+if(!APP.docentesDestacados)APP.docentesDestacados=[];
+
+function renderNoticiasPublicas(){var g=document.getElementById('noticias-publicas-grid');if(!g)return;var n=APP.noticias||[];if(!n.length){g.innerHTML='<div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:40px;margin-bottom:10px;">📰</div><p>No hay noticias aún.</p></div>';return;}g.innerHTML=n.map(function(x){return '<div class="noticia-card"><div class="noticia-img">'+(x.emoji||'📰')+'</div><div class="noticia-body"><div class="noticia-fecha">'+(x.fecha||'')+'</div><h4>'+(x.titulo||'')+'</h4><p>'+(x.resumen||'')+'</p></div></div>';}).join('');}
+function renderDocentesDestacados(){var g=document.getElementById('docentes-destacados-grid');if(!g)return;var d=APP.docentesDestacados||[];if(!d.length){g.innerHTML='<div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:40px;margin-bottom:10px;">👨‍🏫</div><p>El admin puede agregar docentes.</p></div>';return;}g.innerHTML=d.map(function(x){return '<div class="docente-card"><div class="docente-avatar">'+(x.emoji||'👨‍🏫')+'</div><div class="docente-nombre">'+(x.nombre||'')+'</div><div class="docente-materia">'+(x.materia||'')+'</div><div class="docente-grado">'+(x.grado||'')+'</div></div>';}).join('');}
+function renderComunicadosPublicos(){var l=document.getElementById('comunicados-publicos-list');if(!l)return;var c=APP.comunicados||[];if(!c.length){l.innerHTML='<div style="text-align:center;padding:40px;color:#bbb;"><div style="font-size:40px;margin-bottom:10px;">📋</div><p>No hay comunicados aún.</p></div>';return;}l.innerHTML=c.map(function(x){return '<div class="comunicado-card"><div class="comunicado-icon">'+(x.emoji||'📋')+'</div><div class="comunicado-body"><h4>'+(x.titulo||'')+'</h4><p>'+(x.texto||'')+'</p><div class="comunicado-fecha">'+(x.fecha||'')+'</div></div></div>';}).join('');}
+function renderFaqExtra(){var el=document.getElementById('faq-extra-list');if(!el)return;el.innerHTML=(APP.faqExtra||[]).map(function(x){return '<div class="faq-item" onclick="toggleFaq(this)"><div class="faq-pregunta">'+(x.pregunta||'')+' <span class="faq-arrow">▼</span></div><div class="faq-respuesta">'+(x.respuesta||'')+'</div></div>';}).join('');}
+setTimeout(function(){renderNoticiasPublicas();renderDocentesDestacados();renderComunicadosPublicos();renderFaqExtra();},1000);
+
+// ── Panel admin contenido ──
+var _esI='width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;';
+var _esL='display:block;font-size:11px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase;';
+function _oG(t,b){var ti=document.getElementById('modal-generico-title');if(ti)ti.textContent=t;var bi=document.getElementById('modal-generico-body');if(bi)bi.innerHTML=b;openModal('modal-generico');}
+function _rL(id,arr,fn){var el=document.getElementById(id);if(!el)return;el.innerHTML=arr.length?arr.map(fn).join(''):'<p style="color:#bbb;text-align:center;font-size:13px;padding:8px;">No hay elementos.</p>';}
+function _delBtn(fn,i){return '<button onclick="'+fn+'('+i+')" style="background:#fee2e2;border:none;border-radius:6px;padding:4px 9px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;flex-shrink:0;">🗑️</button>';}
+
+function openAdminNoticias(){
+    _oG('📰 Noticias','<div id="noticias-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;min-height:20px;"></div><div style="background:#f8fafc;border-radius:12px;padding:14px;border:1.5px dashed #ddd;"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#0f1c3a;">➕ Agregar</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;"><div><label style="'+_esL+'">Ícono</label><input type="text" id="not-emoji" placeholder="📰" maxlength="4" style="'+_esI+'"></div><div><label style="'+_esL+'">Fecha</label><input type="date" id="not-fecha" style="'+_esI+'"></div></div><div style="margin-bottom:10px;"><label style="'+_esL+'">Título *</label><input type="text" id="not-titulo" placeholder="Título..." style="'+_esI+'"></div><div style="margin-bottom:12px;"><label style="'+_esL+'">Resumen</label><textarea id="not-resumen" rows="2" style="'+_esI+'resize:none;" placeholder="Descripción..."></textarea></div><button class="btn btn-gold" onclick="saveNoticia()" style="width:100%;">💾 Guardar</button></div>');
+    _rL('noticias-admin-list',APP.noticias||[],function(x,i){return '<div style="background:white;border-radius:8px;padding:9px 13px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;"><div><span style="font-size:16px;margin-right:6px;">'+(x.emoji||'📰')+'</span><strong style="font-size:13px;">'+(x.titulo||'')+'</strong><span style="color:#bbb;font-size:11px;margin-left:5px;">'+(x.fecha||'')+'</span></div>'+_delBtn('deleteNoticia',i)+'</div>';});
+}
+function saveNoticia(){var t=(document.getElementById('not-titulo')||{}).value.trim();if(!t){toast('Título obligatorio','error');return;}if(!APP.noticias)APP.noticias=[];var f=(document.getElementById('not-fecha')||{}).value;APP.noticias.unshift({titulo:t,resumen:(document.getElementById('not-resumen')||{}).value.trim(),emoji:(document.getElementById('not-emoji')||{}).value.trim()||'📰',fecha:f?new Date(f+'T12:00').toLocaleDateString('es-DO'):''});persistSave();openAdminNoticias();renderNoticiasPublicas();toast('✅ Noticia publicada','success');}
+function deleteNoticia(i){if(!confirm('¿Eliminar?'))return;(APP.noticias||[]).splice(i,1);persistSave();openAdminNoticias();renderNoticiasPublicas();toast('Eliminada','info');}
+
+function openAdminDocentes(){
+    _oG('👨‍🏫 Docentes','<div id="docentes-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;min-height:20px;"></div><div style="background:#f8fafc;border-radius:12px;padding:14px;border:1.5px dashed #ddd;"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#0f1c3a;">➕ Agregar</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;"><div><label style="'+_esL+'">Ícono</label><input type="text" id="doc-emoji" placeholder="👨‍🏫" maxlength="4" style="'+_esI+'"></div><div><label style="'+_esL+'">Nombre *</label><input type="text" id="doc-nombre" placeholder="Prof. Juan" style="'+_esI+'"></div><div><label style="'+_esL+'">Materia *</label><input type="text" id="doc-materia" placeholder="Matemáticas" style="'+_esI+'"></div><div><label style="'+_esL+'">Nivel</label><input type="text" id="doc-grado" placeholder="Secundaria" style="'+_esI+'"></div></div><button class="btn btn-gold" onclick="saveDocente()" style="width:100%;margin-top:4px;">💾 Guardar</button></div>');
+    _rL('docentes-admin-list',APP.docentesDestacados||[],function(x,i){return '<div style="background:white;border-radius:8px;padding:9px 13px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;"><div><span style="font-size:16px;margin-right:6px;">'+(x.emoji||'👨‍🏫')+'</span><strong style="font-size:13px;">'+(x.nombre||'')+'</strong> · <span style="color:#b8963e;font-size:12px;">'+(x.materia||'')+'</span></div>'+_delBtn('deleteDocente',i)+'</div>';});
+}
+function saveDocente(){var n=(document.getElementById('doc-nombre')||{}).value.trim(),m=(document.getElementById('doc-materia')||{}).value.trim();if(!n||!m){toast('Nombre y materia obligatorios','error');return;}if(!APP.docentesDestacados)APP.docentesDestacados=[];APP.docentesDestacados.push({nombre:n,materia:m,emoji:(document.getElementById('doc-emoji')||{}).value.trim()||'👨‍🏫',grado:(document.getElementById('doc-grado')||{}).value.trim()});persistSave();openAdminDocentes();renderDocentesDestacados();toast('✅ Docente agregado','success');}
+function deleteDocente(i){if(!confirm('¿Eliminar?'))return;(APP.docentesDestacados||[]).splice(i,1);persistSave();openAdminDocentes();renderDocentesDestacados();toast('Eliminado','info');}
+
+function openAdminComunicados(){
+    _oG('📋 Comunicados','<div id="comunicados-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;min-height:20px;"></div><div style="background:#f8fafc;border-radius:12px;padding:14px;border:1.5px dashed #ddd;"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#0f1c3a;">➕ Nuevo</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;"><div><label style="'+_esL+'">Ícono</label><input type="text" id="com-emoji" placeholder="📋" maxlength="4" style="'+_esI+'"></div><div><label style="'+_esL+'">Fecha</label><input type="date" id="com-fecha" style="'+_esI+'"></div></div><div style="margin-bottom:10px;"><label style="'+_esL+'">Título *</label><input type="text" id="com-titulo" placeholder="Asunto..." style="'+_esI+'"></div><div style="margin-bottom:12px;"><label style="'+_esL+'">Contenido *</label><textarea id="com-texto" rows="3" style="'+_esI+'resize:none;" placeholder="Texto..."></textarea></div><button class="btn btn-gold" onclick="saveComunicado()" style="width:100%;">💾 Publicar</button></div>');
+    _rL('comunicados-admin-list',APP.comunicados||[],function(x,i){return '<div style="background:white;border-radius:8px;padding:9px 13px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;"><div><span style="font-size:16px;margin-right:6px;">'+(x.emoji||'📋')+'</span><strong style="font-size:13px;">'+(x.titulo||'')+'</strong><span style="color:#bbb;font-size:11px;margin-left:5px;">'+(x.fecha||'')+'</span></div>'+_delBtn('deleteComunicado',i)+'</div>';});
+}
+function saveComunicado(){var t=(document.getElementById('com-titulo')||{}).value.trim(),x=(document.getElementById('com-texto')||{}).value.trim();if(!t||!x){toast('Título y contenido obligatorios','error');return;}if(!APP.comunicados)APP.comunicados=[];var f=(document.getElementById('com-fecha')||{}).value;APP.comunicados.unshift({titulo:t,texto:x,emoji:(document.getElementById('com-emoji')||{}).value.trim()||'📋',fecha:f?new Date(f+'T12:00').toLocaleDateString('es-DO'):''});persistSave();openAdminComunicados();renderComunicadosPublicos();toast('✅ Comunicado publicado','success');}
+function deleteComunicado(i){if(!confirm('¿Eliminar?'))return;(APP.comunicados||[]).splice(i,1);persistSave();openAdminComunicados();renderComunicadosPublicos();toast('Eliminado','info');}
+
+function openAdminFaq(){
+    _oG('❓ FAQ','<div id="faq-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;min-height:20px;"></div><div style="background:#f8fafc;border-radius:12px;padding:14px;border:1.5px dashed #ddd;"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#0f1c3a;">➕ Nueva Pregunta</h4><div style="margin-bottom:10px;"><label style="'+_esL+'">Pregunta *</label><input type="text" id="faq-p-in" placeholder="¿Cuándo son las inscripciones?" style="'+_esI+'"></div><div style="margin-bottom:12px;"><label style="'+_esL+'">Respuesta *</label><textarea id="faq-r-in" rows="3" style="'+_esI+'resize:none;" placeholder="Respuesta..."></textarea></div><button class="btn btn-gold" onclick="saveFaqItem()" style="width:100%;">💾 Agregar</button></div>');
+    _rL('faq-admin-list',APP.faqExtra||[],function(x,i){return '<div style="background:white;border-radius:8px;padding:9px 13px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;"><div style="font-size:13px;color:#0f1c3a;font-weight:600;">❓ '+(x.pregunta||'')+'</div>'+_delBtn('deleteFaqItem',i)+'</div>';});
+}
+function saveFaqItem(){var p=(document.getElementById('faq-p-in')||{}).value.trim(),r=(document.getElementById('faq-r-in')||{}).value.trim();if(!p||!r){toast('Pregunta y respuesta obligatorias','error');return;}if(!APP.faqExtra)APP.faqExtra=[];APP.faqExtra.push({pregunta:p,respuesta:r});persistSave();openAdminFaq();renderFaqExtra();var ep=document.getElementById('faq-p-in');if(ep)ep.value='';var er=document.getElementById('faq-r-in');if(er)er.value='';toast('✅ Pregunta agregada','success');}
+function deleteFaqItem(i){if(!confirm('¿Eliminar?'))return;(APP.faqExtra||[]).splice(i,1);persistSave();openAdminFaq();renderFaqExtra();toast('Eliminada','info');}
+
+
+// ══════════════════════════════════════════════
+//  FIX CRÍTICO — Funciones faltantes
+// ══════════════════════════════════════════════
+
+// resetActivityTimer — faltaba completamente
+var _activityTimeout = null;
+function resetActivityTimer() {
+    if (_activityTimeout) clearTimeout(_activityTimeout);
+    // Auto-logout después de 2 horas de inactividad
+    _activityTimeout = setTimeout(function() {
+        if (APP.currentUser) {
+            toast('Sesión cerrada por inactividad', 'info');
+            if (typeof logout === 'function') logout();
+        }
+    }, 7200000); // 2 horas
+}
+
+// Reiniciar timer en actividad del usuario
+['click', 'keypress', 'scroll', 'touchstart'].forEach(function(ev) {
+    document.addEventListener(ev, function() {
+        if (APP.currentUser && typeof resetActivityTimer === 'function') {
+            resetActivityTimer();
+        }
+    }, { passive: true });
 });
