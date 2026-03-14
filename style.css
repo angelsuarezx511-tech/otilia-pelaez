@@ -5689,7 +5689,7 @@ input[type="password"] { padding-right: 42px !important; }
     animation: scaleIn .2s var(--ease) !important;
 }
 /* Ocultar dash-header duplicado */
-.role-home-banner + .dash-header { display: none !important; }
+/* .role-home-banner + .dash-header — NO ocultar, contiene los tabs principales */
 
 /* Role banner */
 .role-home-banner { animation: fadeIn .4s ease both !important; }
@@ -5918,4 +5918,53 @@ input[type="password"] { padding-right: 42px !important; }
 @media (hover:none) and (pointer:coarse) {
     .btn, .dash-tab, .pub-nav-links a, .nav-btn, .dropdown-menu a { min-height: 40px; }
     .valor-card:hover, .instalacion-card:hover, .kpi-card:hover { transform: none !important; }
+}
+
+
+/* ── FIX BARRA BLANCA DEFINITIVO ── */
+#home-role-section,
+#home-role-panel {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+}
+#home-role-section:empty,
+#home-role-panel:empty,
+#home-role-section:not(:has(*)),
+#home-role-panel:not(:has(*)) {
+    display: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+/* Cuando el page-home muestra el hero directamente sin gap */
+#page-home > #hero { margin-bottom: 0 !important; }
+#page-home > div:empty { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
+
+/* ── FIX DROPDOWNS NAVBAR ── */
+/* Asegurar que los dropdowns sean clickeables */
+.nav-dropdown {
+    position: relative !important;
+    display: inline-flex !important;
+}
+.dropdown-menu {
+    display: none !important;
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+    z-index: 99999 !important;
+}
+.dropdown-menu.open {
+    display: block !important;
+}
+/* En desktop NO usar position:fixed */
+@media (min-width: 769px) {
+    .dropdown-menu {
+        position: absolute !important;
+        top: calc(100% + 4px) !important;
+        left: 0 !important;
+        transform: none !important;
+        width: auto !important;
+        min-width: 210px !important;
+    }
 }
