@@ -5494,3 +5494,167 @@ div:has(> .valor-card) { display: flex !important; flex-wrap: wrap !important; j
     .btn, button, a[onclick] { min-height: 42px; }
     .valor-card:hover, .instalacion-card:hover { transform: none !important; }
 }
+
+
+/* ════════════════════════════════════════════════
+   FIX IPHONE 8 (375px) + LOGIN + NAVBAR MÓVIL
+════════════════════════════════════════════════ */
+
+/* ── Login botones CENTRADOS definitivo ── */
+#login-screen {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+}
+.login-card {
+    text-align: center !important;
+    width: 100% !important;
+    max-width: 360px !important;
+}
+.login-logo { text-align: center !important; }
+#login-form-wrap { width: 100% !important; }
+#login-form-wrap .form-group { text-align: left !important; width: 100% !important; }
+#login-form-wrap .form-group label { text-align: left !important; }
+#login-form-wrap .btn {
+    display: flex !important;
+    width: 100% !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+/* Ojo del password — fijo */
+#login-form-wrap div[style*="position:relative"] button,
+#login-form-wrap div[style*="relative"] button[type="button"] {
+    position: absolute !important;
+    right: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 24px !important;
+    height: 24px !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    animation: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    z-index: 5 !important;
+}
+input[type="password"] { padding-right: 40px !important; }
+
+/* ── NAVBAR ADMIN en móvil — dropdowns accesibles ── */
+@media (max-width: 768px) {
+    #navbar {
+        flex-wrap: wrap !important;
+        padding: 6px 10px !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+    /* Row de links scrollable */
+    .nav-links-row {
+        order: 3 !important;
+        width: 100% !important;
+        display: flex !important;
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        gap: 2px !important;
+        padding: 4px 0 8px !important;
+        scrollbar-width: none !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .nav-links-row::-webkit-scrollbar { display: none !important; }
+
+    /* Dropdowns en móvil — posición fija centrada */
+    .nav-dropdown { position: static !important; }
+    .dropdown-menu {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 280px !important;
+        max-width: 90vw !important;
+        z-index: 99999 !important;
+        max-height: 80vh !important;
+        overflow-y: auto !important;
+    }
+    .dropdown-menu.open { display: block !important; }
+    .dropdown-menu a {
+        font-size: 15px !important;
+        padding: 14px 20px !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    /* User pill compacto */
+    .user-pill span:not(.role-badge) { display: none !important; }
+    .user-pill { padding: 4px 10px !important; }
+    #btn-logout { padding: 5px 8px !important; font-size: 11px !important; }
+}
+
+/* ── iPhone 8 específico (375px) ── */
+@media (max-width: 390px) {
+    #hero { padding: 60px 14px 36px !important; min-height: 85vh !important; }
+    #hero h1 { font-size: 26px !important; }
+    #hero h1 span { font-size: 30px !important; }
+    .hero-sub { font-size: 13px !important; margin-bottom: 20px !important; }
+    .hero-badge { font-size: 9px !important; padding: 4px 12px !important; }
+    .hero-btns { gap: 8px !important; }
+    .hero-btns button, .hero-btns a {
+        width: 100% !important;
+        max-width: 260px !important;
+        font-size: 13px !important;
+        padding: 12px 16px !important;
+    }
+    .login-card { padding: 20px 14px !important; }
+    .login-logo h2 { font-size: 14px !important; }
+    .nav-btn { font-size: 10.5px !important; padding: 5px 8px !important; }
+    #btn-logout { font-size: 10px !important; padding: 4px 7px !important; }
+    .role-home-btns { grid-template-columns: 1fr !important; gap: 6px !important; }
+    .dash-tab { font-size: 10px !important; padding: 6px 9px !important; }
+    #portal-fab { bottom: 12px !important; right: 12px !important; }
+    #portal-fab button { font-size: 12px !important; padding: 10px 14px !important; }
+    .stats-bar { padding: 0 !important; }
+    .stat-item .num { font-size: 20px !important; }
+    .stat-item .lbl { font-size: 9px !important; }
+}
+
+/* ── Backdrop para dropdowns en móvil ── */
+#dropdown-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99998;
+}
+#dropdown-backdrop.show { display: block; }
+
+/* ── FAB del admin bot — no interferir con hero ── */
+#bot-fab-admin,
+#bot-fab-padre,
+#bot-fab-profe,
+#bot-fab-enfer {
+    z-index: 8997 !important;
+}
+#portal-fab { z-index: 8998 !important; }
+
+/* ── Hero sin interferencia del FAB ── */
+#hero { z-index: 1 !important; }
+#hero > div { z-index: 2 !important; position: relative !important; }
+
+/* ── Sección de Categorías en móvil ── */
+.dash-tabs {
+    display: flex !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 5px !important;
+    padding-bottom: 4px !important;
+}
+.dash-tabs::-webkit-scrollbar { display: none !important; }
+.dash-tab { flex-shrink: 0 !important; white-space: nowrap !important; min-height: 36px !important; }
