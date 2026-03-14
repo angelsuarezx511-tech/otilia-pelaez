@@ -50,20 +50,19 @@
             <a onclick="showPage('inscripcion')">📝 Inscripción</a>
             <a onclick="scrollToContacto()">📍 Contacto</a>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
+        <div style="display:flex;gap:8px;align-items:center;" id="pub-nav-btns">
             <button class="pub-login-btn" onclick="showLoginScreen()">🔐 Iniciar Sesión</button>
             <button class="pub-login-btn pub-inscribir-btn" onclick="showPage('inscripcion')">📝 Inscribirse</button>
         </div>
-        <!-- Botón hamburguesa para móvil -->
         <button id="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menú">
             <span></span><span></span><span></span>
         </button>
     </nav>
 
-    <!-- Menú móvil -->
+    <!-- Menú Móvil -->
     <div id="mobile-menu">
         <button id="mobile-close-btn" onclick="closeMobileMenu()">✕</button>
-        <div class="mobile-logo">🎓 C.E. Otilia Peláez</div>
+        <div style="font-family:'Playfair Display',serif;color:#d4af37;font-size:20px;font-weight:900;margin-bottom:20px;">🎓 C.E. Otilia Peláez</div>
         <a onclick="showPage('home');scrollToTop();closeMobileMenu()">🏠 Inicio</a>
         <a onclick="showPage('about');closeMobileMenu()">📚 Nosotros</a>
         <a onclick="showPage('anuncios');closeMobileMenu()">📢 Anuncios</a>
@@ -87,7 +86,7 @@
                 <h2>Centro Educativo Otilia Peláez</h2>
                 <p>Sistema de Gestión Educativa · Sabana Perdida, SDN</p>
             </div>
-            <div id="login-form-wrap" style="width:100%;">
+            <div id="login-form-wrap">
                 <div id="login-alert" class="alert alert-error" style="display:none;"></div>
                 <!-- Saved account chips -->
                 <div id="saved-accounts-bar" style="display:none;margin-bottom:12px;"></div>
@@ -102,9 +101,9 @@
                     <input type="checkbox" id="remember-me" style="width:16px;height:16px;cursor:pointer;accent-color:var(--gold);">
                     <label for="remember-me" style="font-size:13px;color:#555;cursor:pointer;margin:0;">Recuérdame en este dispositivo</label>
                 </div>
-                <button class="btn btn-gold" style="width:100%;padding:14px;font-size:15px;margin-bottom:10px;text-align:center;display:block;" onclick="doLogin()">Iniciar Sesión →</button>
-                <button class="btn btn-outline" style="width:100%;margin-bottom:8px;text-align:center;display:block;" onclick="showRegister()">📝 Registrarse (Padre / Estudiante)</button>
-                <button class="btn btn-outline" style="width:100%;background:rgba(22,33,62,0.06);text-align:center;display:block;" onclick="openProfesorModal()">👨‍🏫 Acceso Maestros</button>
+                <button class="btn btn-gold" style="width:100%;padding:14px;font-size:15px;margin-bottom:10px;" onclick="doLogin()">Iniciar Sesión →</button>
+                <button class="btn btn-outline" style="width:100%;margin-bottom:8px;" onclick="showRegister()">📝 Registrarse (Padre / Estudiante)</button>
+                <button class="btn btn-outline" style="width:100%;background:rgba(22,33,62,0.06);" onclick="openProfesorModal()">👨‍🏫 Acceso Maestros</button>
             </div>
             <div id="register-form-wrap" style="display:none;">
                 <div id="reg-alert" class="alert alert-error" style="display:none;"></div>
@@ -243,8 +242,8 @@
             </div>
         </div>
         <!-- Sección según rol -->
-        <div id="home-role-section" style="display:none;margin:0;padding:0;height:0;overflow:hidden;"></div>
-        <div id="home-role-panel" style="display:none;margin:0;padding:0;height:0;overflow:hidden;"></div>
+        <div id="home-role-section"></div>
+        <div id="home-role-panel"></div>
 
         <!-- MISIÓN Y VALORES -->
         <div class="section" style="background:white;padding:60px 20px;">
@@ -587,19 +586,6 @@
             </div>
         </div>
 
-        <!-- ═══ PROGRAMAS TÉCNICOS ═══ -->
-        <div style="background:linear-gradient(135deg,#16213e,#0f1c3a);padding:50px 20px;">
-            <div style="max-width:1100px;margin:0 auto;">
-                <div style="text-align:center;margin-bottom:36px;">
-                    <h2 style="font-family:'Playfair Display',serif;color:white;font-size:28px;margin:0 0 8px;">🎓 Bachilleratos Técnicos</h2>
-                    <p style="color:rgba(255,255,255,0.6);font-size:14px;">Programas técnicos acreditados por el MINERD para el año 2025-2026</p>
-                </div>
-                <div id="bachilleratos-publicos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
-                    <!-- Cargado dinámicamente por renderCarrerasPublic() -->
-                </div>
-            </div>
-        </div>
-
         <!-- ═══ VALORES INSTITUCIONALES ═══ -->
         <div style="background:white;padding:50px 20px;">
             <div style="max-width:1100px;margin:0 auto;">
@@ -828,6 +814,51 @@
                 </div>
             </div>
         </div>
+
+        <!-- ═══ NOTICIAS DEL CENTRO ═══ -->
+        <div style="background:#f8fafc;padding:50px 20px;">
+            <div style="max-width:1100px;margin:0 auto;">
+                <div class="section-title"><h2>Noticias <span>del Centro</span></h2><div class="divider"></div></div>
+                <div id="noticias-publicas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;margin-top:28px;">
+                    <div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:44px;margin-bottom:10px;">📰</div><p style="font-size:14px;">No hay noticias publicadas aún.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ EQUIPO DOCENTE ═══ -->
+        <div style="background:white;padding:50px 20px;">
+            <div style="max-width:1100px;margin:0 auto;">
+                <div class="section-title"><h2>Nuestro <span>Equipo Docente</span></h2><div class="divider"></div></div>
+                <div id="docentes-destacados-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px;margin-top:28px;">
+                    <div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:44px;margin-bottom:10px;">👨‍🏫</div><p style="font-size:14px;">El admin puede agregar docentes desde el panel.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ COMUNICADOS OFICIALES ═══ -->
+        <div style="background:#f0f4ff;padding:50px 20px;">
+            <div style="max-width:1000px;margin:0 auto;">
+                <div class="section-title"><h2>Comunicados <span>Oficiales</span></h2><div class="divider"></div></div>
+                <div id="comunicados-publicos-list" style="display:flex;flex-direction:column;gap:12px;margin-top:28px;">
+                    <div style="text-align:center;padding:40px;color:#bbb;"><div style="font-size:44px;margin-bottom:10px;">📋</div><p style="font-size:14px;">No hay comunicados aún.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ PREGUNTAS FRECUENTES ═══ -->
+        <div style="background:white;padding:50px 20px;">
+            <div style="max-width:780px;margin:0 auto;">
+                <div class="section-title"><h2>Preguntas <span>Frecuentes</span></h2><div class="divider"></div></div>
+                <div id="faq-publico-list" style="margin-top:28px;display:flex;flex-direction:column;gap:10px;">
+                    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-pregunta">📅 ¿Cuándo son las inscripciones? <span class="faq-arrow">▼</span></div><div class="faq-respuesta">Las inscripciones están abiertas de lunes a viernes 7:30AM–4:30PM en la secretaría del centro.</div></div>
+                    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-pregunta">📄 ¿Qué documentos necesito? <span class="faq-arrow">▼</span></div><div class="faq-respuesta">Acta de nacimiento, calificaciones anteriores, cédula del padre/tutor, 2 fotos 2×2 y pago de matrícula.</div></div>
+                    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-pregunta">💰 ¿Cuáles son las tarifas? <span class="faq-arrow">▼</span></div><div class="faq-respuesta">Las tarifas varían por nivel. Consulta la sección de Tarifas en el menú o visítanos en secretaría.</div></div>
+                    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-pregunta">📱 ¿Cómo accedo al portal? <span class="faq-arrow">▼</span></div><div class="faq-respuesta">Haz clic en "Iniciar Sesión" y regístrate con tu correo para acceder al portal de padres o estudiantes.</div></div>
+                    <div id="faq-extra-list"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Reglamento -->
         <div id="est-reglamento" class="est-section">
             <div style="max-width:860px;margin:0 auto;padding:18px;">
@@ -1700,6 +1731,18 @@
                     </div>
 
                     <!-- CONTRASEÑA -->
+                    <!-- CONTENIDO SITIO WEB -->
+                    <div class="cfg-section">
+                        <h4 class="cfg-section-h">🌐 Contenido del Sitio Web</h4>
+                        <p style="font-size:13px;color:#888;margin-bottom:16px;">Gestiona el contenido que aparece en la página pública.</p>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;">
+                            <button class="btn btn-gold" onclick="openAdminNoticias()" style="justify-content:center;display:flex;align-items:center;gap:6px;">📰 Noticias</button>
+                            <button class="btn btn-gold" onclick="openAdminDocentes()" style="justify-content:center;display:flex;align-items:center;gap:6px;">👨‍🏫 Equipo Docente</button>
+                            <button class="btn btn-gold" onclick="openAdminComunicados()" style="justify-content:center;display:flex;align-items:center;gap:6px;">📋 Comunicados</button>
+                            <button class="btn btn-gold" onclick="openAdminFaq()" style="justify-content:center;display:flex;align-items:center;gap:6px;">❓ FAQ</button>
+                        </div>
+                    </div>
+
                     <div id="cfg-pass" class="cfg-section">
                         <h4 class="cfg-section-h">🔑 Cambiar Contraseña de Administrador</h4>
                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;max-width:600px;">
@@ -3144,6 +3187,51 @@
         </div>
 
 
+
+        <!-- ═══ NOTICIAS DEL CENTRO ═══ -->
+        <div style="background:#f8fafc;padding:50px 20px;">
+            <div style="max-width:1100px;margin:0 auto;">
+                <div class="section-title"><h2>Noticias <span>del Centro</span></h2><div class="divider"></div></div>
+                <div id="noticias-publicas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;margin-top:28px;">
+                    <div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:44px;margin-bottom:10px;">📰</div><p style="font-size:14px;">No hay noticias publicadas aún.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ EQUIPO DOCENTE ═══ -->
+        <div style="background:white;padding:50px 20px;">
+            <div style="max-width:1100px;margin:0 auto;">
+                <div class="section-title"><h2>Nuestro <span>Equipo Docente</span></h2><div class="divider"></div></div>
+                <div id="docentes-destacados-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px;margin-top:28px;">
+                    <div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:44px;margin-bottom:10px;">👨‍🏫</div><p style="font-size:14px;">El admin puede agregar docentes desde el panel.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ COMUNICADOS OFICIALES ═══ -->
+        <div style="background:#f0f4ff;padding:50px 20px;">
+            <div style="max-width:1000px;margin:0 auto;">
+                <div class="section-title"><h2>Comunicados <span>Oficiales</span></h2><div class="divider"></div></div>
+                <div id="comunicados-publicos-list" style="display:flex;flex-direction:column;gap:12px;margin-top:28px;">
+                    <div style="text-align:center;padding:40px;color:#bbb;"><div style="font-size:44px;margin-bottom:10px;">📋</div><p style="font-size:14px;">No hay comunicados aún.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ PREGUNTAS FRECUENTES ═══ -->
+        <div style="background:white;padding:50px 20px;">
+            <div style="max-width:780px;margin:0 auto;">
+                <div class="section-title"><h2>Preguntas <span>Frecuentes</span></h2><div class="divider"></div></div>
+                <div id="faq-publico-list" style="margin-top:28px;display:flex;flex-direction:column;gap:10px;">
+                    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-pregunta">📅 ¿Cuándo son las inscripciones? <span class="faq-arrow">▼</span></div><div class="faq-respuesta">Las inscripciones están abiertas de lunes a viernes 7:30AM–4:30PM en la secretaría del centro.</div></div>
+                    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-pregunta">📄 ¿Qué documentos necesito? <span class="faq-arrow">▼</span></div><div class="faq-respuesta">Acta de nacimiento, calificaciones anteriores, cédula del padre/tutor, 2 fotos 2×2 y pago de matrícula.</div></div>
+                    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-pregunta">💰 ¿Cuáles son las tarifas? <span class="faq-arrow">▼</span></div><div class="faq-respuesta">Las tarifas varían por nivel. Consulta la sección de Tarifas en el menú o visítanos en secretaría.</div></div>
+                    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-pregunta">📱 ¿Cómo accedo al portal? <span class="faq-arrow">▼</span></div><div class="faq-respuesta">Haz clic en "Iniciar Sesión" y regístrate con tu correo para acceder al portal de padres o estudiantes.</div></div>
+                    <div id="faq-extra-list"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Reglamento -->
         <div id="est-reglamento" class="est-section">
             <div style="max-width:860px;margin:0 auto;padding:18px;">
@@ -4458,6 +4546,18 @@
                 <button class="btn btn-outline" onclick="closeModal('modal-carrera')">Cancelar</button>
                 <button class="btn btn-gold" onclick="saveCarrera()">💾 Guardar</button>
             </div>
+        </div>
+    </div>
+
+
+    <!-- Modal Genérico Admin -->
+    <div id="modal-generico" class="modal-overlay" onclick="if(event.target===this)closeModal('modal-generico')">
+        <div class="modal-box" style="max-width:580px;">
+            <div class="modal-header">
+                <h3 id="modal-generico-title">Panel</h3>
+                <button class="modal-close" onclick="closeModal('modal-generico')">✕</button>
+            </div>
+            <div class="modal-body" id="modal-generico-body" style="max-height:72vh;overflow-y:auto;padding:4px 24px 20px;"></div>
         </div>
     </div>
 
