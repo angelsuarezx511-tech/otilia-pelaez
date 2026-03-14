@@ -6487,3 +6487,21 @@ document.addEventListener('click', function(e) {
         closeMobileMenu();
     }
 });
+
+// ── Ocultar secciones vacías del home ────────────────────────────────────
+(function hideEmptyHomeSections() {
+    function checkAndHide() {
+        ['home-role-section','home-role-panel'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            if (!el.innerHTML.trim()) {
+                el.style.cssText = 'display:none!important;margin:0!important;padding:0!important;height:0!important;overflow:hidden!important;';
+            } else {
+                el.style.cssText = '';
+            }
+        });
+    }
+    // Revisar al cargar y después de cada cambio
+    document.addEventListener('DOMContentLoaded', checkAndHide);
+    setInterval(checkAndHide, 500);
+})();
