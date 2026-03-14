@@ -6484,29 +6484,8 @@ function toggleFaq(el){el.classList.toggle('open');}
 (function(){var bd=document.createElement('div');bd.id='dropdown-backdrop';bd.onclick=function(){document.querySelectorAll('.dropdown-menu.open').forEach(function(m){m.classList.remove('open');});bd.classList.remove('show');};document.body.appendChild(bd);})();
 
 // Mejorar dropdowns con backdrop
-var _oBN=buildNavbar;
-buildNavbar=function(role){
-    _oBN(role);
-    setTimeout(function(){
-        document.querySelectorAll('.dropdown-trigger').forEach(function(btn){
-            btn.onclick=function(e){
-                e.stopPropagation();
-                var menu=this.nextElementSibling;
-                var open=menu&&menu.classList.contains('open');
-                document.querySelectorAll('.dropdown-menu.open').forEach(function(m){m.classList.remove('open');});
-                var bd=document.getElementById('dropdown-backdrop');
-                if(!open&&menu){menu.classList.add('open');if(bd)bd.classList.add('show');}
-                else{if(bd)bd.classList.remove('show');}
-            };
-        });
-    },50);
-};
-document.addEventListener('click',function(e){
-    if(!e.target.closest||!e.target.closest('.nav-dropdown')){
-        document.querySelectorAll('.dropdown-menu.open').forEach(function(m){m.classList.remove('open');});
-        var bd=document.getElementById('dropdown-backdrop');if(bd)bd.classList.remove('show');
-    }
-});
+// buildNavbar original — sin modificaciones (dropdowns funcionan correctamente)
+// click listener para dropdowns removido — el original ya lo maneja
 
 // ── Fix botón Entrar maestros ──
 document.addEventListener('DOMContentLoaded',function(){
@@ -6594,3 +6573,23 @@ function deleteFaqItem(i){if(!confirm('¿Eliminar?'))return;(APP.faqExtra||[]).s
         }
     }, { passive: true });
 });
+
+
+// ── FIX BARRA BLANCA — ocultar divs vacíos del home ──
+(function fixWhiteBar() {
+    function hideEmpty() {
+        ['home-role-section', 'home-role-panel'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            var isEmpty = !el.innerHTML.trim();
+            el.style.display = isEmpty ? 'none' : '';
+            el.style.margin = isEmpty ? '0' : '';
+            el.style.padding = isEmpty ? '0' : '';
+            el.style.height = isEmpty ? '0' : '';
+            el.style.overflow = isEmpty ? 'hidden' : '';
+        });
+    }
+    // Ejecutar inmediatamente y periódicamente
+    hideEmpty();
+    setInterval(hideEmpty, 300);
+})();
