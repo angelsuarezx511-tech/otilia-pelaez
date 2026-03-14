@@ -5645,3 +5645,21 @@ table tbody tr:hover { background: rgba(212,175,55,.05) !important; }
     .pub-nav-links a, .nav-btn, .dash-tab { min-height: 36px; }
     .valor-card:hover, .instalacion-card:hover { transform: none !important; }
 }
+
+
+/* ── FIX CRÍTICO: Modales ocultos por defecto, visibles solo con .open ── */
+.modal-overlay {
+    display: none !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0,0,0,.55) !important;
+    backdrop-filter: blur(4px) !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 9000 !important;
+    padding: 20px !important;
+}
+.modal-overlay.open {
+    display: flex !important;
+    animation: overlayIn .2s ease !important;
+}
