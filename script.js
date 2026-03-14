@@ -6740,3 +6740,446 @@ function deleteFaqItem(i) {
     APP.faqExtra.splice(i, 1); persistSave(); renderFaqAdminList(); renderFaqExtra();
     toast('Eliminada', 'info');
 }
+
+// ════════════════════════════════════════════════════════════════
+//  CORRECCIÓN DE ERRORES — Funciones faltantes
+// ════════════════════════════════════════════════════════════════
+
+// showCatRole — faltaba completamente
+function showCatRole(role, btn) {
+    document.querySelectorAll('.cat-role-pane').forEach(function(p) { p.style.display = 'none'; });
+    var el = document.getElementById('cat-role-' + role);
+    if (el) el.style.display = 'block';
+    document.querySelectorAll('.cat-role-tab').forEach(function(b) {
+        b.style.background = 'white';
+        b.style.color = '#888';
+        b.style.borderColor = 'var(--border)';
+    });
+    if (btn) {
+        btn.style.background = 'var(--gold)';
+        btn.style.color = 'var(--navy)';
+        btn.style.borderColor = 'var(--gold)';
+    }
+}
+
+// addCategoria — faltaba completamente
+function addCategoria() {
+    var nombre = prompt('Nombre de la nueva categoría:');
+    if (!nombre || !nombre.trim()) return;
+    var icono = prompt('Ícono (emoji):', '📁') || '📁';
+    if (!APP.categoriasConfig) APP.categoriasConfig = { sitio: [], estudiante: [], padre: [], profe: [] };
+    APP.categoriasConfig.sitio.push({
+        id: 'cat-custom-' + Date.now(),
+        nombre: nombre.trim(),
+        icono: icono,
+        activa: true,
+        custom: true,
+        fields: []
+    });
+    persistSave();
+    if (typeof initCategoriasAdmin === 'function') initCategoriasAdmin();
+    toast('✅ Categoría "' + nombre.trim() + '" agregada', 'success');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  BOT MEJORADO — IA Real via Anthropic API
+// ════════════════════════════════════════════════════════════════
+
+// Contexto del centro para el bot IA
+var _botContexto = [
+    'Eres el asistente virtual del Centro Educativo Otilia Peláez, ubicado en Av. Charles de Gaulle, Sabana Perdida, Santo Domingo Norte, República Dominicana.',
+    'El centro fue fundado en 1978 y pertenece al Distrito Educativo 10-02 del MINERD.',
+    'Teléfono: (809) 590-0771. WhatsApp: +1 (809) 590-0771. Email: otiliapelaezadm@gmail.com.',
+    'Horario: Lunes a Viernes 7:30 AM – 4:30 PM.',
+    'Ofrece niveles: Primaria (1°-6°) y Secundaria (1°-6°) con bachilleratos técnicos.',
+    'Nota mínima aprobatoria: 65. Cuadro de Honor: 90+. Boletines trimestrales.',
+    'Programas: Ciencias de la Salud, Informática, Contabilidad, Educación, Turismo Hotelero.',
+    'Administrado por las Hermanas de San Pablo desde su fundación.',
+    'Responde siempre en español dominicano, de forma amable, breve y directa.',
+    'Si no sabes algo específico del centro, redirige al teléfono o a secretaría.',
+    'Nunca inventes datos. Si es algo de notas o datos personales, di que lo vean en su portal.'
+].join(' ');
+
+var _botUsandoIA = false;
+
+async function fabProcessIA(role, msg) {
+    var bc = APP.botConfig;
+    // Verificar si tiene la función IA activada
+    if (!bc || !bc.autoIa || !bc.iaKey) {
+        fabProcess(role, msg);
+        return;
+    }
+    
+    _botUsandoIA = true;
+    var pfx = FAB_PFX[role];
+    
+    // Mostrar indicador de escritura
+    var msgsEl = document.getElementById(pfx + '-msgs');
+    var typingId = 'typing-' + Date.now();
+    if (msgsEl) {
+        msgsEl.innerHTML += '<div id="' + typingId + '" style="display:flex;gap:8px;align-items:flex-end;">'
+            + '<div style="width:28px;height:28px;background:#d4af37;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;">🤖</div>'
+            + '<div style="background:#f0f4ff;border-radius:14px 14px 14px 2px;padding:10px 13px;">'
+            + '<span style="display:flex;gap:4px;align-items:center;">'
+            + '<span style="width:7px;height:7px;background:#d4af37;border-radius:50%;animation:typingDot 1s infinite;"></span>'
+            + '<span style="width:7px;height:7px;background:#d4af37;border-radius:50%;animation:typingDot 1s 0.2s infinite;"></span>'
+            + '<span style="width:7px;height:7px;background:#d4af37;border-radius:50%;animation:typingDot 1s 0.4s infinite;"></span>'
+            + '</span></div></div>';
+        msgsEl.scrollTop = msgsEl.scrollHeight;
+    }
+
+    // Construir historial
+    var history = (fabHistory[role] || []).slice(-8).map(function(m) {
+        return { role: m.from === 'user' ? 'user' : 'assistant', content: m.text };
+    });
+
+    try {
+        var resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': bc.iaKey, 'anthropic-version': '2023-06-01' },
+            body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 300,
+                system: _botContexto,
+                messages: history.concat([{ role: 'user', content: msg }])
+            })
+        });
+        var data = await resp.json();
+        var typing = document.getElementById(typingId);
+        if (typing) typing.remove();
+        var answer = (data.content && data.content[0] && data.content[0].text) || 'Lo siento, no pude procesar tu consulta. Intenta de nuevo.';
+        fabAddMsg(role, 'bot', answer);
+        fabRenderQR(role, ['👍 Entendido', '¿Algo más?', '📍 Contacto']);
+    } catch (e) {
+        var typing = document.getElementById(typingId);
+        if (typing) typing.remove();
+        // Fallback al bot local
+        fabProcess(role, msg);
+    }
+    _botUsandoIA = false;
+}
+
+// Sobrescribir roleFabSend para usar IA si está activada
+var _origRoleFabSend = roleFabSend;
+roleFabSend = function(role) {
+    var pfx = FAB_PFX[role];
+    var inp = document.getElementById(pfx + '-inp');
+    var msg = inp && inp.value.trim();
+    if (!msg) return;
+    if (inp) inp.value = '';
+    fabAddMsg(role, 'user', msg);
+    fabRenderQR(role, []);
+    var bc = APP.botConfig;
+    var delay = (bc && bc.delay) || 600;
+    if (bc && bc.autoIa && bc.iaKey) {
+        setTimeout(function() { fabProcessIA(role, msg); }, delay);
+    } else {
+        setTimeout(function() { fabProcess(role, msg); }, delay);
+    }
+};
+
+// Sobrescribir fabQuickReply para usar IA si está activada
+var _origFabQuickReply = fabQuickReply;
+fabQuickReply = function(role, text) {
+    fabAddMsg(role, 'user', text);
+    fabRenderQR(role, []);
+    var bc = APP.botConfig;
+    var delay = (bc && bc.delay) || 600;
+    if (bc && bc.autoIa && bc.iaKey) {
+        setTimeout(function() { fabProcessIA(role, text); }, delay);
+    } else {
+        setTimeout(function() { fabProcess(role, text); }, delay);
+    }
+};
+
+// Sobrescribir sendChat (bot de estudiantes) para usar IA
+var _origSendChat = sendChat;
+sendChat = function() {
+    var inp = document.getElementById('chat-input');
+    if (!inp) return;
+    var msg = inp.value.trim();
+    if (!msg) return;
+    addChatMsg('user', msg);
+    inp.value = '';
+    renderQuickReplies([]);
+    var bc = APP.botConfig;
+    var delay = (bc && bc.delay) || 600;
+    if (bc && bc.autoIa && bc.iaKey) {
+        setTimeout(function() { sendChatIA(msg); }, delay);
+    } else {
+        setTimeout(function() { processChatMsg(msg); }, delay);
+    }
+};
+
+async function sendChatIA(msg) {
+    var bc = APP.botConfig;
+    if (!bc || !bc.autoIa || !bc.iaKey) { processChatMsg(msg); return; }
+    
+    // Indicador de escritura
+    var chatMsgs = document.getElementById('chat-messages');
+    var tid = 'ct-' + Date.now();
+    if (chatMsgs) {
+        chatMsgs.innerHTML += '<div id="' + tid + '" class="chat-msg bot-msg" style="display:flex;gap:6px;align-items:flex-end;">'
+            + '<div style="width:26px;height:26px;background:#d4af37;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">' + (bc.emoji || '🤖') + '</div>'
+            + '<div style="background:#f0f4ff;border-radius:12px;padding:8px 12px;">'
+            + '<span style="display:flex;gap:3px;"><span style="width:6px;height:6px;background:#d4af37;border-radius:50%;animation:typingDot 1s infinite;"></span>'
+            + '<span style="width:6px;height:6px;background:#d4af37;border-radius:50%;animation:typingDot 1s 0.2s infinite;"></span>'
+            + '<span style="width:6px;height:6px;background:#d4af37;border-radius:50%;animation:typingDot 1s 0.4s infinite;"></span></span></div></div>';
+        chatMsgs.scrollTop = chatMsgs.scrollHeight;
+    }
+
+    var studentCtx = _botContexto;
+    if (APP.currentUser && APP.currentUser.role === 'estudiante') {
+        var st = APP.students && APP.students.find(function(s) { return s.email === APP.currentUser.email; });
+        if (st) studentCtx += ' El estudiante se llama ' + st.nombre + ' ' + st.apellido + ', está en ' + (st.grado || 'un grado') + '.';
+    }
+
+    try {
+        var resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': bc.iaKey, 'anthropic-version': '2023-06-01' },
+            body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 280,
+                system: studentCtx,
+                messages: [{ role: 'user', content: msg }]
+            })
+        });
+        var data = await resp.json();
+        var typing = document.getElementById(tid);
+        if (typing) typing.remove();
+        var answer = (data.content && data.content[0] && data.content[0].text) || 'No pude procesar tu consulta. Intenta de nuevo.';
+        addChatMsg('bot', answer);
+        renderQuickReplies(['📝 Inscripciones', '📋 Mis notas', '⏰ Horario', '📍 Contacto']);
+    } catch (e) {
+        var typing = document.getElementById(tid);
+        if (typing) typing.remove();
+        processChatMsg(msg);
+    }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  BOT — Más respuestas y funciones reales de datos
+// ════════════════════════════════════════════════════════════════
+
+// Expandir KB_PADRE con más respuestas
+Object.assign(KB_PADRE, {
+    pago:     { k: ['pago', 'cuota', 'mensualidad', 'dinero', 'precio', 'costo', 'tarifa'], r: '💰 Las tarifas están disponibles en la sección **"Tarifas"** del menú. También puede consultarlas en secretaría del centro. Pagos: lunes a viernes 7:30 AM – 4:30 PM.' },
+    galeria:  { k: ['foto', 'galeria', 'fotos', 'imagen', 'actividad', 'evento'], r: '📸 Las fotos de actividades del centro están en la sección **"Galería"** del menú principal. El admin la actualiza regularmente con eventos y actividades.' },
+    docente:  { k: ['maestro', 'profesor', 'docente', 'director'], r: '👨‍🏫 Para contactar a un maestro, use la sección **"Mensajes"** de su portal de padre. También puede visitar el centro en horario escolar: lunes–viernes 7:30 AM – 4:30 PM.' },
+    rendimiento: { k: ['promedio', 'rendimiento', 'cuadro de honor', 'meritorio', 'notas de mi hijo'], r: '📊 Para ver el rendimiento de su hijo/a, vaya a la pestaña **"Notas"** de su portal. Escalas: 0-64 No aprobado · 65-69 Mínimo · 70-79 Bueno · 80-89 Meritorio · 90-100 Cuadro de Honor.' },
+    orientacion: { k: ['orientacion', 'orientador', 'psicologico', 'bullying', 'problema'], r: '🤝 El centro cuenta con servicio de orientación escolar. Puede solicitar una cita llamando al **(809) 590-0771** o acercándose a secretaría. La orientadora atiende de lunes a viernes.' },
+    transporte: { k: ['transporte', 'bus', 'ruta', 'guagua'], r: '🚌 El centro no tiene transporte propio actualmente. Existen rutas de transporte público por la Av. Charles de Gaulle. Para más información, llame al **(809) 590-0771**.' },
+    comedor: { k: ['comedor', 'almuerzo', 'comida', 'lonchera', 'merienda'], r: '🍽️ El centro cuenta con servicio de comedor escolar. Los estudiantes pueden traer su lonchera o utilizar el comedor. Consulte las tarifas en secretaría.' },
+    graduacion: { k: ['graduacion', 'acto', 'diploma', 'ceremonia'], r: '🎓 Las graduaciones se realizan a finales de junio. Los requisitos incluyen: haber completado el nivel, tener todas las materias aprobadas y no tener deudas pendientes con el centro.' }
+});
+
+// Expandir KB_PROFE
+Object.assign(KB_PROFE, {
+    registro: { k: ['registro', 'libro', 'acta', 'expediente'], r: '📚 Los libros de registro deben estar actualizados semanalmente. Las actas se entregan al coordinador al cierre de cada trimestre. Conserve copias de todos los documentos.' },
+    reunion: { k: ['reunion', 'asamblea', 'junta', 'consejo'], r: '🤝 Las reuniones de padres se coordinan a través del sistema de mensajería del portal. También puede usar el módulo de **"Reuniones"** en su panel docente para agendar citas individuales.' },
+    planificacion: { k: ['planificacion', 'plan de clase', 'secuencia', 'unidad'], r: '📝 La planificación curricular debe seguir el Currículo Dominicano Revisado del MINERD. Use la plantilla oficial y présente los planes semanalmente a coordinación. Disponible en: minerd.gob.do' },
+    herramienta: { k: ['herramienta', 'recurso', 'tecnologia', 'plataforma', 'digital'], r: '💻 El MINERD provee la plataforma **AulaDigi** para recursos digitales. También puede usar Google Classroom o Microsoft Teams con autorización del director. Consulte al coordinador de tecnología.' },
+    incidente: { k: ['incidente', 'problema', 'disciplina', 'amonestacion', 'sancion'], r: '⚠️ Los incidentes disciplinarios deben documentarse en el **Registro de Incidentes** del sistema. Notifique al orientador y al director según la gravedad. El reglamento interno define los procedimientos.' },
+    covid: { k: ['enfermedad', 'ausentismo', 'salud', 'enfermeria'], r: '🏥 En caso de enfermedad, el estudiante debe ir a enfermería. Si hay síntomas graves, se notifica al padre inmediatamente. Registre la ausencia en el sistema con el código correspondiente.' }
+});
+
+// Expandir KB_ADMIN  
+Object.assign(KB_ADMIN, {
+    personal: { k: ['personal', 'nomina', 'empleado', 'contratacion', 'recurso humano'], r: '👥 La gestión de personal debe seguir la **Ley 41-00**. Toda contratación requiere aprobación del Distrito Educativo. Los expedientes del personal deben estar actualizados y disponibles para supervisión.' },
+    presupuesto: { k: ['presupuesto', 'fondo', 'financiero', 'presupuestario', 'gasto'], r: '💰 El presupuesto del centro se gestiona según las normativas del MINERD. Los fondos recibidos deben documentarse y rendirse cuenta al Distrito. Para fondos escolares, consulte la Ord. 09-2006.' },
+    infraestructura: { k: ['infraestructura', 'edificio', 'aula', 'reparacion', 'mantenimiento'], r: '🏫 Para reparaciones o mantenimiento, solicite al Distrito Educativo 10-02. Emergencias que afecten la seguridad deben reportarse de inmediato. Documente todas las solicitudes por escrito.' },
+    matricula: { k: ['matricula', 'inscripcion', 'registro', 'documentos', 'requisito'], r: '📝 La matrícula requiere: acta de nacimiento, calificaciones anteriores, cédula del tutor y 2 fotos. El proceso se realiza en secretaría. Registre todo en el sistema para reportes al MINERD.' },
+    inspeccion: { k: ['inspeccion', 'visita', 'auditor', 'supervision', 'inspector'], r: '🔍 Para visitas de supervisión tenga listos: plan operativo anual, registros de asistencia, expedientes de estudiantes, nómina del personal y estado financiero. El Distrito da aviso previo generalmente.' },
+    sisalril: { k: ['seguro', 'seguro medico', 'sisalril', 'salud laboral'], r: '🏥 Los empleados tienen derecho al seguro médico del **SRS (SISALRIL)**. El centro debe estar afiliado al sistema y reportar al TSS mensualmente. Para consultas: tss.gob.do o al 311.' },
+    tecnologia: { k: ['tecnologia', 'sistema', 'plataforma', 'computadora', 'aula virtual'], r: '💻 El MINERD provee tecnología a centros públicos a través del programa de digitalización educativa. Para solicitar equipos o soporte, contacte al Departamento de Tecnología del Distrito 10-02.' }
+});
+
+// ════════════════════════════════════════════════════════════════
+//  NUEVAS FUNCIONES DE ESCUELA
+// ════════════════════════════════════════════════════════════════
+
+// Generador de carnet estudiantil
+function generarCarnet(studentId) {
+    var st = APP.students && APP.students.find(function(s) { return s.id === studentId; });
+    if (!st) { toast('Estudiante no encontrado', 'error'); return; }
+    
+    var w = window.open('', '_blank', 'width=400,height=600');
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Carnet - ' + st.nombre + ' ' + st.apellido + '</title>'
+        + '<style>body{margin:0;font-family:Arial,sans-serif;background:#f0f4ff;display:flex;align-items:center;justify-content:center;min-height:100vh;}'
+        + '.carnet{background:white;border-radius:16px;padding:0;width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.2);overflow:hidden;}'
+        + '.header{background:linear-gradient(135deg,#0f1c3a,#1a3a6e);padding:20px;text-align:center;}'
+        + '.header img{width:60px;height:60px;border-radius:50%;border:2px solid #d4af37;}'
+        + '.header h3{color:white;font-size:13px;margin:8px 0 0;}'
+        + '.header p{color:#d4af37;font-size:10px;margin:2px 0 0;}'
+        + '.body{padding:20px;text-align:center;}'
+        + '.avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#0f1c3a,#1a3a6e);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px;border:3px solid #d4af37;}'
+        + '.nombre{font-size:18px;font-weight:800;color:#0f1c3a;margin:0 0 4px;}'
+        + '.dato{font-size:12px;color:#666;margin:2px 0;}'
+        + '.grado{background:#d4af37;color:#0f1c3a;border-radius:20px;padding:4px 16px;font-weight:800;font-size:13px;display:inline-block;margin:8px 0;}'
+        + '.id{font-size:11px;color:#bbb;border-top:1px solid #eee;padding-top:12px;margin-top:12px;}'
+        + '.footer{background:#f8f9fc;padding:12px;text-align:center;font-size:10px;color:#888;border-top:1px solid #eee;}'
+        + '@media print{body{background:white;}.carnet{box-shadow:none;}}'
+        + '</style></head><body>'
+        + '<div class="carnet">'
+        + '<div class="header"><h3>C.E. Otilia Peláez</h3><p>Sabana Perdida, Santo Domingo Norte · Est. 1978</p></div>'
+        + '<div class="body">'
+        + '<div class="avatar">🎓</div>'
+        + '<div class="nombre">' + st.nombre + ' ' + st.apellido + '</div>'
+        + '<div class="grado">' + (st.grado || 'Sin grado') + '</div>'
+        + '<div class="dato">📧 ' + (st.email || '—') + '</div>'
+        + '<div class="dato">📞 ' + (st.telefono || '—') + '</div>'
+        + '<div class="id">ID: ' + st.id + ' · Año Escolar 2025-2026</div>'
+        + '</div>'
+        + '<div class="footer">MINERD · Distrito Educativo 10-02 · (809) 590-0771</div>'
+        + '</div>'
+        + '<script>setTimeout(function(){window.print();},400);<\/script>'
+        + '</body></html>';
+    w.document.write(html);
+    w.document.close();
+}
+
+// Reporte de rendimiento del estudiante
+function generarReporteEstudiante(studentId) {
+    var st = APP.students && APP.students.find(function(s) { return s.id === studentId; });
+    if (!st) { toast('Estudiante no encontrado', 'error'); return; }
+    var notas = (APP.notas || []).filter(function(n) { return n.studentId === st.id; });
+    
+    var w = window.open('', '_blank', 'width=700,height=800');
+    var total = notas.reduce(function(sum, n) { return sum + (parseFloat(n.nota) || 0); }, 0);
+    var promedio = notas.length ? (total / notas.length).toFixed(1) : '—';
+    var estado = parseFloat(promedio) >= 90 ? '🏆 Cuadro de Honor' : parseFloat(promedio) >= 80 ? '⭐ Meritorio' : parseFloat(promedio) >= 65 ? '✅ Aprobado' : '⚠️ En riesgo';
+    
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte - ' + st.nombre + '</title>'
+        + '<style>body{font-family:Arial,sans-serif;padding:40px;color:#333;max-width:600px;margin:0 auto;}'
+        + 'h1{color:#0f1c3a;font-size:22px;} h2{color:#0f1c3a;font-size:16px;border-bottom:2px solid #d4af37;padding-bottom:8px;}'
+        + 'table{width:100%;border-collapse:collapse;margin:16px 0;} th{background:#0f1c3a;color:white;padding:8px 12px;text-align:left;font-size:12px;}'
+        + 'td{padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;}'
+        + '.promedio{font-size:32px;font-weight:800;color:#d4af37;} .estado{font-size:14px;margin-top:4px;}'
+        + '.header{display:flex;align-items:center;gap:20px;margin-bottom:30px;padding:20px;background:#f8f9fc;border-radius:12px;border-left:4px solid #d4af37;}'
+        + '@media print{body{padding:20px;}}'
+        + '</style></head><body>'
+        + '<div class="header"><div><h1>Reporte Académico</h1><p style="margin:0;color:#888;font-size:13px;">Centro Educativo Otilia Peláez · Año 2025-2026</p></div></div>'
+        + '<h2>Datos del Estudiante</h2>'
+        + '<table><tr><td><strong>Nombre:</strong></td><td>' + st.nombre + ' ' + st.apellido + '</td><td><strong>Grado:</strong></td><td>' + (st.grado || '—') + '</td></tr>'
+        + '<tr><td><strong>ID:</strong></td><td>' + st.id + '</td><td><strong>Email:</strong></td><td>' + (st.email || '—') + '</td></tr></table>'
+        + '<h2>Rendimiento Académico</h2>'
+        + '<div style="text-align:center;padding:20px;background:#f8f9fc;border-radius:12px;margin:16px 0;">'
+        + '<div class="promedio">' + promedio + '</div><div class="estado">' + estado + '</div></div>'
+        + '<table><thead><tr><th>Materia</th><th>Nota</th><th>Trimestre</th><th>Estado</th></tr></thead><tbody>'
+        + (notas.length ? notas.map(function(n) {
+            var nota = parseFloat(n.nota) || 0;
+            var est = nota >= 90 ? '🏆' : nota >= 80 ? '⭐' : nota >= 65 ? '✅' : '❌';
+            return '<tr><td>' + (n.materia || '—') + '</td><td><strong>' + n.nota + '</strong></td><td>' + (n.trimestre || '1°') + '</td><td>' + est + '</td></tr>';
+        }).join('') : '<tr><td colspan="4" style="text-align:center;color:#888;">Sin notas registradas</td></tr>')
+        + '</tbody></table>'
+        + '<p style="font-size:11px;color:#bbb;margin-top:30px;text-align:center;">Generado el ' + new Date().toLocaleDateString('es-DO') + ' · C.E. Otilia Peláez · (809) 590-0771</p>'
+        + '<script>setTimeout(function(){window.print();},400);<\/script>'
+        + '</body></html>';
+    w.document.write(html);
+    w.document.close();
+}
+
+// Estadísticas rápidas del centro
+function getEstadisticasCentro() {
+    var totalEst = (APP.students || []).length;
+    var totalInsc = (APP.inscripciones || []).length;
+    var totalAnn = (APP.announcements || []).length;
+    var notas = (APP.notas || []);
+    var promGeneral = notas.length ? (notas.reduce(function(s, n) { return s + (parseFloat(n.nota) || 0); }, 0) / notas.length).toFixed(1) : '—';
+    var ausencias = (APP.ausencias || []).length;
+    var pendientes = (APP.ausencias || []).filter(function(a) { return a.status === 'pending'; }).length;
+    var mensajes = (APP.mensajes || []).length;
+    return { totalEst: totalEst, totalInsc: totalInsc, totalAnn: totalAnn, promGeneral: promGeneral, ausencias: ausencias, pendientes: pendientes, mensajes: mensajes };
+}
+
+// Notificación masiva mejorada
+function enviarNotificacionMasiva(titulo, mensaje, tipo) {
+    if (!titulo || !mensaje) { toast('Título y mensaje son requeridos', 'error'); return; }
+    if (!APP.notificaciones) APP.notificaciones = [];
+    var notif = {
+        id: 'N-' + Date.now(),
+        titulo: titulo,
+        mensaje: mensaje,
+        tipo: tipo || 'info',
+        fecha: new Date().toLocaleDateString('es-DO'),
+        hora: new Date().toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
+        leida: false
+    };
+    APP.notificaciones.unshift(notif);
+    persistSave();
+    toast('✅ Notificación enviada a todos los usuarios', 'success');
+    return notif;
+}
+
+// Animación de puntos de escritura del bot
+var _botTypingStyle = document.createElement('style');
+_botTypingStyle.textContent = '@keyframes typingDot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}';
+document.head.appendChild(_botTypingStyle);
+
+
+// ════════════════════════════════════════════════════════
+//  FIX DROPDOWNS EN MÓVIL — backdrop + cierre táctil
+// ════════════════════════════════════════════════════════
+
+// Crear backdrop si no existe
+(function() {
+    if (!document.getElementById('dropdown-backdrop')) {
+        var bd = document.createElement('div');
+        bd.id = 'dropdown-backdrop';
+        bd.onclick = function() { closeAllDropdowns(); };
+        document.body.appendChild(bd);
+    }
+})();
+
+function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown-menu.open').forEach(function(m) { m.classList.remove('open'); });
+    var bd = document.getElementById('dropdown-backdrop');
+    if (bd) bd.classList.remove('show');
+}
+
+// Sobrescribir el buildNavbar para mejorar dropdowns en móvil
+var _origBuildNavbar = buildNavbar;
+buildNavbar = function(role) {
+    _origBuildNavbar(role);
+    // Re-attach dropdown events con backdrop
+    setTimeout(function() {
+        document.querySelectorAll('.dropdown-trigger').forEach(function(btn) {
+            btn.onclick = function(e) {
+                e.stopPropagation();
+                var menu = this.nextElementSibling;
+                var isOpen = menu.classList.contains('open');
+                closeAllDropdowns();
+                if (!isOpen) {
+                    menu.classList.add('open');
+                    var bd = document.getElementById('dropdown-backdrop');
+                    if (bd) bd.classList.add('show');
+                }
+            };
+        });
+    }, 100);
+};
+
+// Cerrar dropdowns al hacer click fuera
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.nav-dropdown')) {
+        closeAllDropdowns();
+    }
+});
+
+// ════════════════════════════════════════════════════════
+//  FIX LOGIN — centrar botones
+// ════════════════════════════════════════════════════════
+// Esperar que el DOM esté listo y centrar los botones del login
+document.addEventListener('DOMContentLoaded', function() {
+    // Asegurar que los botones del login estén centrados
+    var loginBtns = document.querySelectorAll('#login-form-wrap .btn');
+    loginBtns.forEach(function(btn) {
+        btn.style.textAlign = 'center';
+        btn.style.justifyContent = 'center';
+        btn.style.display = 'flex';
+        btn.style.width = '100%';
+        btn.style.alignItems = 'center';
+        btn.style.boxSizing = 'border-box';
+    });
+});
