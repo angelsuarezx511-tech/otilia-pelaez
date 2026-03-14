@@ -5806,3 +5806,283 @@ html {
 #login-screen p[style*="text-align"] {
     text-align: center !important;
 }
+
+/* ════════════════════════════════════════════════════════
+   ANIMACIONES GLOBALES — Login, Perfiles, Paneles, Pages
+════════════════════════════════════════════════════════ */
+
+/* ── Variables de animación ── */
+:root {
+    --anim-fast:  0.3s;
+    --anim-mid:   0.5s;
+    --anim-slow:  0.7s;
+    --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring:cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ══ 1. LOGIN — animaciones completas ══ */
+#login-screen {
+    animation: loginBgIn 0.6s ease both;
+}
+@keyframes loginBgIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.login-card {
+    animation: loginCardIn 0.6s var(--ease-out) both !important;
+}
+@keyframes loginCardIn {
+    from { opacity: 0; transform: translateY(40px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* Logo rebota al entrar */
+.login-emblem {
+    animation: logoIn 0.7s var(--ease-spring) 0.2s both;
+}
+@keyframes logoIn {
+    from { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+    to   { opacity: 1; transform: scale(1)   rotate(0deg); }
+}
+
+/* Título del login */
+.login-logo h2 {
+    animation: fadeSlideUp 0.5s ease 0.35s both;
+}
+.login-logo p {
+    animation: fadeSlideUp 0.5s ease 0.45s both;
+}
+
+/* Campos del formulario en cascada */
+#login-form-wrap .form-group:nth-child(1) { animation: fadeSlideUp 0.4s ease 0.5s both; }
+#login-form-wrap .form-group:nth-child(2) { animation: fadeSlideUp 0.4s ease 0.6s both; }
+#login-form-wrap .form-group:nth-child(3) { animation: fadeSlideUp 0.4s ease 0.65s both; }
+#login-form-wrap > div[style*="flex"]      { animation: fadeSlideUp 0.4s ease 0.7s both; }
+
+/* Botones del login */
+#login-form-wrap .btn:nth-of-type(1) { animation: fadeSlideUp 0.4s ease 0.75s both; }
+#login-form-wrap .btn:nth-of-type(2) { animation: fadeSlideUp 0.4s ease 0.85s both; }
+#login-form-wrap .btn:nth-of-type(3) { animation: fadeSlideUp 0.4s ease 0.95s both; }
+
+/* Inputs — focus animado */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    transform: scale(1.01);
+    transition: all 0.2s ease !important;
+}
+
+/* Botones — press effect */
+.btn:active {
+    transform: scale(0.97) !important;
+    transition: transform 0.1s ease !important;
+}
+.btn-gold:hover {
+    transform: translateY(-2px) scale(1.02) !important;
+}
+
+/* ══ 2. PAGES — entrada animada ══ */
+.page {
+    animation: pageSlideIn 0.4s var(--ease-out) both !important;
+}
+@keyframes pageSlideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══ 3. NAVBAR ADMIN — animación de tabs ══ */
+#navbar {
+    animation: navbarDropIn 0.4s var(--ease-out) both;
+}
+@keyframes navbarDropIn {
+    from { opacity: 0; transform: translateY(-100%); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.nav-links-row a,
+.nav-links-row button,
+.nav-btn {
+    position: relative;
+    overflow: hidden;
+}
+.nav-links-row a::after,
+.nav-links-row button::after,
+.nav-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    width: 0; height: 2px;
+    background: var(--gold);
+    transition: all 0.25s ease;
+    transform: translateX(-50%);
+}
+.nav-links-row a:hover::after,
+.nav-links-row button:hover::after,
+.nav-btn:hover::after {
+    width: 80%;
+}
+
+/* ══ 4. PANEL ADMIN ══ */
+#page-admin .dash-section,
+.dash-section {
+    animation: panelFadeIn 0.5s var(--ease-out) both;
+}
+@keyframes panelFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards del dashboard */
+.dash-card,
+.kpi-card,
+.stat-card,
+[class*="dash-card"],
+[class*="kpi"] {
+    animation: cardPopIn 0.4s var(--ease-spring) both;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+.dash-card:hover,
+.kpi-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.15) !important;
+}
+@keyframes cardPopIn {
+    from { opacity: 0; transform: scale(0.93); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* ══ 5. PERFIL ADMIN, PROFESOR, ESTUDIANTE, PADRE ══ */
+#dash-perfil-admin,
+#profe-perfil,
+#est-perfil,
+#padre-perfil,
+#enfer-perfil {
+    animation: perfilSlideIn 0.5s var(--ease-out) both;
+}
+@keyframes perfilSlideIn {
+    from { opacity: 0; transform: translateX(-24px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Avatar del perfil */
+.perfil-header img,
+.perfil-avatar,
+[id*="perfil"] img {
+    animation: avatarZoomIn 0.5s var(--ease-spring) 0.2s both;
+    transition: transform 0.3s ease !important;
+}
+.perfil-header img:hover,
+.perfil-avatar:hover {
+    transform: scale(1.06) !important;
+}
+@keyframes avatarZoomIn {
+    from { opacity: 0; transform: scale(0.6); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* Filas del perfil */
+.perfil-row {
+    animation: rowFadeIn 0.35s ease both;
+    transition: background 0.2s ease;
+}
+.perfil-row:hover {
+    background: rgba(212,175,55,0.06) !important;
+}
+.perfil-row:nth-child(1)  { animation-delay: 0.1s; }
+.perfil-row:nth-child(2)  { animation-delay: 0.15s; }
+.perfil-row:nth-child(3)  { animation-delay: 0.2s; }
+.perfil-row:nth-child(4)  { animation-delay: 0.25s; }
+.perfil-row:nth-child(5)  { animation-delay: 0.3s; }
+.perfil-row:nth-child(6)  { animation-delay: 0.35s; }
+@keyframes rowFadeIn {
+    from { opacity: 0; transform: translateX(12px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ══ 6. PANEL ESTUDIANTE ══ */
+#page-estudiante .est-section,
+.est-section {
+    animation: panelFadeIn 0.5s var(--ease-out) both;
+}
+
+/* Tabs del estudiante/profesor/padre */
+.dash-tabs button,
+.est-tabs button,
+.padre-tabs button {
+    transition: all 0.2s ease !important;
+    position: relative;
+}
+.dash-tabs button:hover,
+.est-tabs button:hover,
+.padre-tabs button:hover {
+    transform: translateY(-2px) !important;
+}
+.dash-tabs button.active,
+.est-tabs button.active,
+.padre-tabs button.active {
+    animation: tabActiveIn 0.3s var(--ease-spring) both;
+}
+@keyframes tabActiveIn {
+    from { transform: scale(0.95); }
+    to   { transform: scale(1); }
+}
+
+/* ══ 7. MODALES ══ */
+.modal-overlay {
+    animation: overlayFadeIn 0.25s ease both;
+}
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.modal-box {
+    animation: modalIn 0.35s var(--ease-spring) both;
+}
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.88) translateY(20px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+/* ══ 8. TABLAS ══ */
+table tbody tr {
+    animation: rowFadeIn 0.3s ease both;
+    transition: background 0.15s ease;
+}
+table tbody tr:hover {
+    background: rgba(212,175,55,0.06) !important;
+}
+table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+table tbody tr:nth-child(2) { animation-delay: 0.10s; }
+table tbody tr:nth-child(3) { animation-delay: 0.15s; }
+table tbody tr:nth-child(4) { animation-delay: 0.20s; }
+table tbody tr:nth-child(5) { animation-delay: 0.25s; }
+
+/* ══ 9. NOTIFICACIONES ══ */
+.notif-panel {
+    animation: notifSlideIn 0.3s var(--ease-out) both;
+}
+@keyframes notifSlideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ══ 10. FLOATING ACTION BUTTON ══ */
+#portal-fab button {
+    animation: fabIn 0.5s var(--ease-spring) 1s both;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+@keyframes fabIn {
+    from { opacity: 0; transform: scale(0) rotate(-180deg); }
+    to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+#portal-fab button:hover {
+    transform: scale(1.08) translateY(-3px) !important;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.35) !important;
+}
+
+/* ══ Keyframe base reutilizable ══ */
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
