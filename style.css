@@ -5770,3 +5770,39 @@ html {
     from { width: 0; }
     to   { width: 60px; }
 }
+
+
+/* ── FIX FINAL: Login botones texto centrado ── */
+#login-screen .btn,
+#login-screen button.btn,
+#login-form-wrap .btn,
+#login-form-wrap button {
+    text-align: center !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Labels del form alineados izquierda, todo lo demás centrado */
+#login-screen .login-card {
+    text-align: center !important;
+}
+#login-screen .form-group label {
+    text-align: left !important;
+    display: block !important;
+}
+#login-screen .form-group input {
+    text-align: left !important;
+}
+
+/* Checkbox row centrado */
+#login-form-wrap > div[style*="flex"] {
+    justify-content: center !important;
+}
+
+/* Copyright centrado */
+#login-screen p[style*="text-align"] {
+    text-align: center !important;
+}
