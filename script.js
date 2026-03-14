@@ -6456,21 +6456,16 @@ function renderAnunciosPublic(){
       +'</div></div></div>';
   }).join('');
 }
-// ── Menú Hamburguesa Móvil ────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════
+//  MENÚ HAMBURGUESA
+// ════════════════════════════════════════════════════════
 function toggleMobileMenu() {
     var menu = document.getElementById('mobile-menu');
     var ham = document.getElementById('nav-hamburger');
     if (!menu || !ham) return;
-    var isOpen = menu.classList.contains('open');
-    if (isOpen) {
-        closeMobileMenu();
-    } else {
-        menu.classList.add('open');
-        ham.classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
+    if (menu.classList.contains('open')) { closeMobileMenu(); }
+    else { menu.classList.add('open'); ham.classList.add('open'); document.body.style.overflow = 'hidden'; }
 }
-
 function closeMobileMenu() {
     var menu = document.getElementById('mobile-menu');
     var ham = document.getElementById('nav-hamburger');
@@ -6479,29 +6474,269 @@ function closeMobileMenu() {
     document.body.style.overflow = '';
 }
 
-document.addEventListener('click', function(e) {
-    var menu = document.getElementById('mobile-menu');
-    var ham = document.getElementById('nav-hamburger');
-    if (menu && menu.classList.contains('open') &&
-        !menu.contains(e.target) && ham && !ham.contains(e.target)) {
-        closeMobileMenu();
-    }
-});
+// ════════════════════════════════════════════════════════
+//  FAQ TOGGLE
+// ════════════════════════════════════════════════════════
+function toggleFaq(el) { el.classList.toggle('open'); }
 
-// ── Ocultar secciones vacías del home ────────────────────────────────────
-(function hideEmptyHomeSections() {
-    function checkAndHide() {
-        ['home-role-section','home-role-panel'].forEach(function(id) {
-            var el = document.getElementById(id);
-            if (!el) return;
-            if (!el.innerHTML.trim()) {
-                el.style.cssText = 'display:none!important;margin:0!important;padding:0!important;height:0!important;overflow:hidden!important;';
-            } else {
-                el.style.cssText = '';
-            }
-        });
+// ════════════════════════════════════════════════════════
+//  RENDER SECCIONES PÚBLICAS
+// ════════════════════════════════════════════════════════
+function renderNoticiasPublicas() {
+    var grid = document.getElementById('noticias-publicas-grid');
+    if (!grid) return;
+    var noticias = (APP.noticias || []);
+    if (!noticias.length) {
+        grid.innerHTML = '<div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:44px;margin-bottom:10px;">📰</div><p>No hay noticias publicadas aún.</p></div>';
+        return;
     }
-    // Revisar al cargar y después de cada cambio
-    document.addEventListener('DOMContentLoaded', checkAndHide);
-    setInterval(checkAndHide, 500);
-})();
+    grid.innerHTML = noticias.map(function(n) {
+        return '<div class="noticia-card"><div class="noticia-img">' + (n.emoji || '📰') + '</div>'
+            + '<div class="noticia-body"><div class="noticia-fecha">' + (n.fecha || '') + '</div>'
+            + '<h4>' + (n.titulo || '') + '</h4><p>' + (n.resumen || '') + '</p></div></div>';
+    }).join('');
+}
+
+function renderDocentesDestacados() {
+    var grid = document.getElementById('docentes-destacados-grid');
+    if (!grid) return;
+    var d = (APP.docentesDestacados || []);
+    if (!d.length) {
+        grid.innerHTML = '<div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:44px;margin-bottom:10px;">👨‍🏫</div><p>El admin puede agregar docentes desde el panel.</p></div>';
+        return;
+    }
+    grid.innerHTML = d.map(function(x) {
+        return '<div class="docente-card"><div class="docente-avatar">' + (x.emoji || '👨‍🏫') + '</div>'
+            + '<div class="docente-nombre">' + (x.nombre || '') + '</div>'
+            + '<div class="docente-materia">' + (x.materia || '') + '</div>'
+            + '<div class="docente-grado">' + (x.grado || '') + '</div></div>';
+    }).join('');
+}
+
+function renderComunicadosPublicos() {
+    var list = document.getElementById('comunicados-publicos-list');
+    if (!list) return;
+    var c = (APP.comunicados || []);
+    if (!c.length) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:#bbb;"><div style="font-size:44px;margin-bottom:10px;">📋</div><p>No hay comunicados aún.</p></div>';
+        return;
+    }
+    list.innerHTML = c.map(function(x) {
+        return '<div class="comunicado-card"><div class="comunicado-icon">' + (x.emoji || '📋') + '</div>'
+            + '<div class="comunicado-body"><h4>' + (x.titulo || '') + '</h4>'
+            + '<p>' + (x.texto || '') + '</p>'
+            + '<div class="comunicado-fecha">' + (x.fecha || '') + '</div></div></div>';
+    }).join('');
+}
+
+function renderFaqExtra() {
+    var el = document.getElementById('faq-extra-list');
+    if (!el) return;
+    var f = (APP.faqExtra || []);
+    el.innerHTML = f.map(function(x) {
+        return '<div class="faq-item" onclick="toggleFaq(this)">'
+            + '<div class="faq-pregunta">' + (x.pregunta || '') + ' <span class="faq-arrow">▼</span></div>'
+            + '<div class="faq-respuesta">' + (x.respuesta || '') + '</div></div>';
+    }).join('');
+}
+
+// Render al cargar
+setTimeout(function() {
+    renderNoticiasPublicas();
+    renderDocentesDestacados();
+    renderComunicadosPublicos();
+    renderFaqExtra();
+}, 1000);
+
+// ════════════════════════════════════════════════════════
+//  PANEL ADMIN — Gestión de contenido
+// ════════════════════════════════════════════════════════
+function _openGenerico(title, bodyHtml) {
+    var t = document.getElementById('modal-generico-title');
+    var b = document.getElementById('modal-generico-body');
+    if (t) t.textContent = title;
+    if (b) b.innerHTML = bodyHtml;
+    openModal('modal-generico');
+}
+
+var _estiloInput = 'width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;';
+var _estiloLabel = 'display:block;font-size:11px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase;';
+
+function openAdminNoticias() {
+    _openGenerico('📰 Noticias del Centro',
+        '<div id="noticias-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;min-height:30px;"></div>'
+        + '<div style="background:#f8fafc;border-radius:12px;padding:16px;border:1.5px dashed #ddd;">'
+        + '<h4 style="margin:0 0 12px;color:#0f1c3a;font-size:14px;font-weight:800;">➕ Agregar Noticia</h4>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">'
+        + '<div><label style="' + _estiloLabel + '">Ícono</label><input type="text" id="not-emoji" placeholder="📰" maxlength="4" style="' + _estiloInput + '"></div>'
+        + '<div><label style="' + _estiloLabel + '">Fecha</label><input type="date" id="not-fecha" style="' + _estiloInput + '"></div>'
+        + '</div>'
+        + '<div style="margin-bottom:10px;"><label style="' + _estiloLabel + '">Título *</label><input type="text" id="not-titulo" placeholder="Título de la noticia..." style="' + _estiloInput + '"></div>'
+        + '<div style="margin-bottom:12px;"><label style="' + _estiloLabel + '">Resumen</label><textarea id="not-resumen" rows="2" placeholder="Descripción breve..." style="' + _estiloInput + 'resize:none;"></textarea></div>'
+        + '<button class="btn btn-gold" onclick="saveNoticia()" style="width:100%;">💾 Guardar Noticia</button>'
+        + '</div>'
+    );
+    renderNoticiasAdminList();
+}
+function renderNoticiasAdminList() {
+    var el = document.getElementById('noticias-admin-list');
+    if (!el) return;
+    var n = (APP.noticias || []);
+    if (!n.length) { el.innerHTML = '<p style="color:#bbb;text-align:center;font-size:13px;padding:8px;">No hay noticias.</p>'; return; }
+    el.innerHTML = n.map(function(x, i) {
+        return '<div style="background:white;border-radius:9px;padding:10px 14px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
+            + '<div><span style="font-size:18px;margin-right:8px;">' + (x.emoji || '📰') + '</span><strong style="font-size:13px;">' + x.titulo + '</strong>'
+            + '<span style="color:#bbb;font-size:11px;margin-left:6px;">' + (x.fecha || '') + '</span></div>'
+            + '<button onclick="deleteNoticia(' + i + ')" style="background:#fee2e2;border:none;border-radius:7px;padding:4px 10px;cursor:pointer;color:#dc2626;font-weight:700;font-size:12px;">🗑️</button></div>';
+    }).join('');
+}
+function saveNoticia() {
+    var titulo = (document.getElementById('not-titulo') || {}).value.trim();
+    var resumen = (document.getElementById('not-resumen') || {}).value.trim();
+    var emoji = (document.getElementById('not-emoji') || {}).value.trim() || '📰';
+    var fechaRaw = (document.getElementById('not-fecha') || {}).value;
+    if (!titulo) { toast('El título es obligatorio', 'error'); return; }
+    if (!APP.noticias) APP.noticias = [];
+    var fecha = fechaRaw ? new Date(fechaRaw + 'T12:00').toLocaleDateString('es-DO') : '';
+    APP.noticias.unshift({ titulo: titulo, resumen: resumen, emoji: emoji, fecha: fecha });
+    persistSave(); renderNoticiasAdminList(); renderNoticiasPublicas();
+    ['not-titulo', 'not-resumen', 'not-emoji', 'not-fecha'].forEach(function(id) { var e = document.getElementById(id); if (e) e.value = ''; });
+    toast('✅ Noticia publicada', 'success');
+}
+function deleteNoticia(i) {
+    if (!confirm('¿Eliminar esta noticia?')) return;
+    APP.noticias.splice(i, 1); persistSave(); renderNoticiasAdminList(); renderNoticiasPublicas();
+    toast('Noticia eliminada', 'info');
+}
+
+function openAdminDocentes() {
+    _openGenerico('👨‍🏫 Equipo Docente',
+        '<div id="docentes-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;min-height:30px;"></div>'
+        + '<div style="background:#f8fafc;border-radius:12px;padding:16px;border:1.5px dashed #ddd;">'
+        + '<h4 style="margin:0 0 12px;color:#0f1c3a;font-size:14px;font-weight:800;">➕ Agregar Docente</h4>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">'
+        + '<div><label style="' + _estiloLabel + '">Ícono</label><input type="text" id="doc-emoji" placeholder="👨‍🏫" maxlength="4" style="' + _estiloInput + '"></div>'
+        + '<div><label style="' + _estiloLabel + '">Nombre *</label><input type="text" id="doc-nombre" placeholder="Prof. Juan Pérez" style="' + _estiloInput + '"></div>'
+        + '<div><label style="' + _estiloLabel + '">Materia *</label><input type="text" id="doc-materia" placeholder="Matemáticas" style="' + _estiloInput + '"></div>'
+        + '<div><label style="' + _estiloLabel + '">Nivel/Grado</label><input type="text" id="doc-grado" placeholder="Secundaria" style="' + _estiloInput + '"></div>'
+        + '</div>'
+        + '<button class="btn btn-gold" onclick="saveDocente()" style="width:100%;margin-top:4px;">💾 Guardar</button>'
+        + '</div>'
+    );
+    renderDocentesAdminList();
+}
+function renderDocentesAdminList() {
+    var el = document.getElementById('docentes-admin-list');
+    if (!el) return;
+    var d = (APP.docentesDestacados || []);
+    if (!d.length) { el.innerHTML = '<p style="color:#bbb;text-align:center;font-size:13px;padding:8px;">No hay docentes.</p>'; return; }
+    el.innerHTML = d.map(function(x, i) {
+        return '<div style="background:white;border-radius:9px;padding:10px 14px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
+            + '<div><span style="font-size:18px;margin-right:8px;">' + (x.emoji || '👨‍🏫') + '</span><strong style="font-size:13px;">' + x.nombre + '</strong>'
+            + ' · <span style="color:#b8963e;font-size:12px;">' + (x.materia || '') + '</span></div>'
+            + '<button onclick="deleteDocente(' + i + ')" style="background:#fee2e2;border:none;border-radius:7px;padding:4px 10px;cursor:pointer;color:#dc2626;font-weight:700;font-size:12px;">🗑️</button></div>';
+    }).join('');
+}
+function saveDocente() {
+    var nombre = (document.getElementById('doc-nombre') || {}).value.trim();
+    var materia = (document.getElementById('doc-materia') || {}).value.trim();
+    var emoji = (document.getElementById('doc-emoji') || {}).value.trim() || '👨‍🏫';
+    var grado = (document.getElementById('doc-grado') || {}).value.trim();
+    if (!nombre || !materia) { toast('Nombre y materia son obligatorios', 'error'); return; }
+    if (!APP.docentesDestacados) APP.docentesDestacados = [];
+    APP.docentesDestacados.push({ nombre: nombre, materia: materia, emoji: emoji, grado: grado });
+    persistSave(); renderDocentesAdminList(); renderDocentesDestacados();
+    ['doc-nombre', 'doc-materia', 'doc-emoji', 'doc-grado'].forEach(function(id) { var e = document.getElementById(id); if (e) e.value = ''; });
+    toast('✅ Docente agregado', 'success');
+}
+function deleteDocente(i) {
+    if (!confirm('¿Eliminar?')) return;
+    APP.docentesDestacados.splice(i, 1); persistSave(); renderDocentesAdminList(); renderDocentesDestacados();
+    toast('Eliminado', 'info');
+}
+
+function openAdminComunicados() {
+    _openGenerico('📋 Comunicados Oficiales',
+        '<div id="comunicados-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;min-height:30px;"></div>'
+        + '<div style="background:#f8fafc;border-radius:12px;padding:16px;border:1.5px dashed #ddd;">'
+        + '<h4 style="margin:0 0 12px;color:#0f1c3a;font-size:14px;font-weight:800;">➕ Nuevo Comunicado</h4>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">'
+        + '<div><label style="' + _estiloLabel + '">Ícono</label><input type="text" id="com-emoji" placeholder="📋" maxlength="4" style="' + _estiloInput + '"></div>'
+        + '<div><label style="' + _estiloLabel + '">Fecha</label><input type="date" id="com-fecha" style="' + _estiloInput + '"></div>'
+        + '</div>'
+        + '<div style="margin-bottom:10px;"><label style="' + _estiloLabel + '">Título *</label><input type="text" id="com-titulo" placeholder="Asunto..." style="' + _estiloInput + '"></div>'
+        + '<div style="margin-bottom:12px;"><label style="' + _estiloLabel + '">Contenido *</label><textarea id="com-texto" rows="3" placeholder="Texto del comunicado..." style="' + _estiloInput + 'resize:none;"></textarea></div>'
+        + '<button class="btn btn-gold" onclick="saveComunicado()" style="width:100%;">💾 Publicar</button>'
+        + '</div>'
+    );
+    renderComunicadosAdminList();
+}
+function renderComunicadosAdminList() {
+    var el = document.getElementById('comunicados-admin-list');
+    if (!el) return;
+    var c = (APP.comunicados || []);
+    if (!c.length) { el.innerHTML = '<p style="color:#bbb;text-align:center;font-size:13px;padding:8px;">No hay comunicados.</p>'; return; }
+    el.innerHTML = c.map(function(x, i) {
+        return '<div style="background:white;border-radius:9px;padding:10px 14px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
+            + '<div><span style="font-size:18px;margin-right:8px;">' + (x.emoji || '📋') + '</span><strong style="font-size:13px;">' + x.titulo + '</strong>'
+            + '<span style="color:#bbb;font-size:11px;margin-left:6px;">' + (x.fecha || '') + '</span></div>'
+            + '<button onclick="deleteComunicado(' + i + ')" style="background:#fee2e2;border:none;border-radius:7px;padding:4px 10px;cursor:pointer;color:#dc2626;font-weight:700;font-size:12px;">🗑️</button></div>';
+    }).join('');
+}
+function saveComunicado() {
+    var titulo = (document.getElementById('com-titulo') || {}).value.trim();
+    var texto = (document.getElementById('com-texto') || {}).value.trim();
+    var emoji = (document.getElementById('com-emoji') || {}).value.trim() || '📋';
+    var fechaRaw = (document.getElementById('com-fecha') || {}).value;
+    if (!titulo || !texto) { toast('Título y contenido son obligatorios', 'error'); return; }
+    if (!APP.comunicados) APP.comunicados = [];
+    var fecha = fechaRaw ? new Date(fechaRaw + 'T12:00').toLocaleDateString('es-DO') : '';
+    APP.comunicados.unshift({ titulo: titulo, texto: texto, emoji: emoji, fecha: fecha });
+    persistSave(); renderComunicadosAdminList(); renderComunicadosPublicos();
+    toast('✅ Comunicado publicado', 'success');
+}
+function deleteComunicado(i) {
+    if (!confirm('¿Eliminar?')) return;
+    APP.comunicados.splice(i, 1); persistSave(); renderComunicadosAdminList(); renderComunicadosPublicos();
+    toast('Eliminado', 'info');
+}
+
+function openAdminFaq() {
+    _openGenerico('❓ Preguntas Frecuentes',
+        '<div id="faq-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;min-height:30px;"></div>'
+        + '<div style="background:#f8fafc;border-radius:12px;padding:16px;border:1.5px dashed #ddd;">'
+        + '<h4 style="margin:0 0 12px;color:#0f1c3a;font-size:14px;font-weight:800;">➕ Nueva Pregunta</h4>'
+        + '<div style="margin-bottom:10px;"><label style="' + _estiloLabel + '">Pregunta *</label><input type="text" id="faq-p-in" placeholder="¿Cuándo son las inscripciones?" style="' + _estiloInput + '"></div>'
+        + '<div style="margin-bottom:12px;"><label style="' + _estiloLabel + '">Respuesta *</label><textarea id="faq-r-in" rows="3" placeholder="Respuesta..." style="' + _estiloInput + 'resize:none;"></textarea></div>'
+        + '<button class="btn btn-gold" onclick="saveFaqItem()" style="width:100%;">💾 Agregar</button>'
+        + '</div>'
+    );
+    renderFaqAdminList();
+}
+function renderFaqAdminList() {
+    var el = document.getElementById('faq-admin-list');
+    if (!el) return;
+    var f = (APP.faqExtra || []);
+    if (!f.length) { el.innerHTML = '<p style="color:#bbb;text-align:center;font-size:13px;padding:8px;">No hay preguntas extra.</p>'; return; }
+    el.innerHTML = f.map(function(x, i) {
+        return '<div style="background:white;border-radius:9px;padding:10px 14px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
+            + '<div style="font-size:13px;color:#0f1c3a;font-weight:600;">❓ ' + (x.pregunta || '') + '</div>'
+            + '<button onclick="deleteFaqItem(' + i + ')" style="background:#fee2e2;border:none;border-radius:7px;padding:4px 10px;cursor:pointer;color:#dc2626;font-weight:700;font-size:12px;flex-shrink:0;">🗑️</button></div>';
+    }).join('');
+}
+function saveFaqItem() {
+    var p = (document.getElementById('faq-p-in') || {}).value.trim();
+    var r = (document.getElementById('faq-r-in') || {}).value.trim();
+    if (!p || !r) { toast('Pregunta y respuesta son obligatorias', 'error'); return; }
+    if (!APP.faqExtra) APP.faqExtra = [];
+    APP.faqExtra.push({ pregunta: p, respuesta: r });
+    persistSave(); renderFaqAdminList(); renderFaqExtra();
+    var ep = document.getElementById('faq-p-in'); if (ep) ep.value = '';
+    var er = document.getElementById('faq-r-in'); if (er) er.value = '';
+    toast('✅ Pregunta agregada', 'success');
+}
+function deleteFaqItem(i) {
+    if (!confirm('¿Eliminar?')) return;
+    APP.faqExtra.splice(i, 1); persistSave(); renderFaqAdminList(); renderFaqExtra();
+    toast('Eliminada', 'info');
+}
