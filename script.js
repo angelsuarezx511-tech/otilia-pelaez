@@ -634,9 +634,13 @@ function buildNavbar(role){
       menu.classList.toggle('open');
     });
   });
-  document.addEventListener('click',()=>{
-    document.querySelectorAll('.dropdown-menu.open').forEach(m=>m.classList.remove('open'));
-  },{once:false});
+  // Solo agregar el listener de cierre una vez
+  if(!window._dropdownListenerAdded){
+    window._dropdownListenerAdded = true;
+    document.addEventListener('click',function(){
+      document.querySelectorAll('.dropdown-menu.open').forEach(function(m){m.classList.remove('open');});
+    });
+  }
 }
 
 function showAdminSection(id){
