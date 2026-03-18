@@ -397,8 +397,10 @@ function loginAs(user){
   }
   showPortalFab(user.role);
   // Remember me
+  // Guardar sesión SIEMPRE (no solo con remember-me)
+  saveSession(user);
   var rememberMe=document.getElementById('remember-me');
-  if(rememberMe&&rememberMe.checked){saveSession(user);}
+  // remember-me ya no es necesario pero se mantiene para compatibilidad
   // Seguridad: limpiar intentos fallidos
   clearLoginAttempts(user.email||'');
   resetActivityTimer();
@@ -428,6 +430,7 @@ function loginAs(user){
   }
   // Reapply all saved configurations to the UI
   setTimeout(applyAllSavedConfig, 200);
+  setTimeout(restoreProfilePhotos, 300);
   setTimeout(updateNotifBadge, 350);
   // Categorías tab: SOLO visible para el admin
   setTimeout(function(){
@@ -2028,37 +2031,86 @@ function resetWebDesign(){
 }
 
 
-var profilePhotos={admin:null,prof:null,est:null,padre:null};
+// ================================================================
+//  📸 SISTEMA DE FOTOS DE PERFIL — guardado por correo
+// ================================================================
 
-function changeProfilePhoto(event,role){
-  var file=event.target.files[0];
-  if(!file)return;
-  var reader=new FileReader();
-  reader.onload=function(e){
-    var src=e.target.result;
-    profilePhotos[role]=src;
-    // Update all avatar displays for this role
-    var ids=[];
-    if(role==='admin') ids=['admin-avatar-display'];
-    if(role==='prof') ids=['prof-avatar-display','prof-perfil-avatar'];
-    if(role==='est') ids=['est-avatar-display','est-perfil-avatar'];
-    if(role==='padre') ids=['padre-avatar-display','padre-perfil-avatar'];
-    ids.forEach(function(id){
-      var el=document.getElementById(id);
-      if(el){el.innerHTML='<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';}
-    });
-    // Update navbar photo
-    var navPhoto=document.getElementById('nav-user-photo');
-    if(navPhoto&&APP.currentUser){
-      var myRole=APP.currentUser.role;
-      if((myRole==='admin'&&role==='admin')||(myRole==='profesor'&&role==='prof')||(myRole==='estudiante'&&role==='est')||(myRole==='padre'&&role==='padre')){
-        navPhoto.src=src;navPhoto.style.display='inline-block';
-      }
+// Obtener foto guardada para un correo
+function getPhotoForEmail(email){
+  try{
+    var all = JSON.parse(localStorage.getItem('otiUserPhotos')||'{}');
+    return all[email] || null;
+  }catch(e){ return null; }
+}
+
+// Guardar foto para un correo
+function savePhotoForEmail(email, src){
+  try{
+    var all = JSON.parse(localStorage.getItem('otiUserPhotos')||'{}');
+    all[email] = src;
+    localStorage.setItem('otiUserPhotos', JSON.stringify(all));
+  }catch(e){}
+}
+
+// Aplicar foto a todos los elementos de UI del rol actual
+function applyPhotoToUI(role, src){
+  var ids=[];
+  if(role==='admin') ids=['admin-avatar-display'];
+  if(role==='prof')  ids=['prof-avatar-display','prof-perfil-avatar'];
+  if(role==='est')   ids=['est-avatar-display','est-perfil-avatar'];
+  if(role==='padre') ids=['padre-avatar-display','padre-perfil-avatar'];
+  if(role==='enfer') ids=['enfer-avatar-display','enfer-perfil-avatar'];
+  ids.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.innerHTML='<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  });
+  // Navbar photo
+  var navPhoto=document.getElementById('nav-user-photo');
+  if(navPhoto){
+    navPhoto.src=src;
+    navPhoto.style.display='inline-block';
+  }
+}
+
+// Restaurar foto del usuario que acaba de iniciar sesión
+function restoreProfilePhotos(){
+  try{
+    if(!APP.currentUser) return;
+    var email = APP.currentUser.email;
+    if(!email) return;
+    var src = getPhotoForEmail(email);
+    if(src){
+      var roleMap={admin:'admin',profesor:'prof',estudiante:'est',padre:'padre',enfermeria:'enfer'};
+      var role = roleMap[APP.currentUser.role] || APP.currentUser.role;
+      applyPhotoToUI(role, src);
     }
-    toast('Foto actualizada','success');
+  }catch(e){}
+}
+
+// Cambiar foto de perfil
+function changeProfilePhoto(event, role){
+  var file = event.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var src = e.target.result;
+    // Guardar ligado al correo del usuario actual
+    if(APP.currentUser && APP.currentUser.email){
+      savePhotoForEmail(APP.currentUser.email, src);
+    }
+    // También guardar por rol por compatibilidad
+    if(!APP.profilePhotos) APP.profilePhotos = {};
+    APP.profilePhotos[APP.currentUser ? APP.currentUser.email : role] = src;
+    persistSave();
+    applyPhotoToUI(role, src);
+    toast('✅ Foto guardada — se mantendrá aunque cierres sesión','success');
   };
   reader.readAsDataURL(file);
 }
+
+// Compat — no usado pero evita errores si algo lo llama
+var profilePhotos = {};
+function loadSavedPhotos(){}
 
 function goToMyProfile(){
   if(!APP.currentUser)return;
@@ -2360,13 +2412,19 @@ function doLoginWith(email,pass){
   doLogin();
 }
 
-// ===== PREVENT EXIT WITHOUT LOGOUT =====
-window.addEventListener('beforeunload',function(e){
-  if(APP.currentUser){
-    e.preventDefault();
-    e.returnValue='¿Seguro que quieres salir? Tu sesión quedará activa.';
-    return e.returnValue;
-  }
+// ===== AUTO-SAVE ON CLOSE (sin advertencia) =====
+window.addEventListener('beforeunload',function(){
+  // Guardar todo silenciosamente antes de cerrar
+  try{ persistSave(); }catch(e){}
+  try{
+    // Guardar sesión activa para restaurar al volver
+    if(APP.currentUser){
+      localStorage.setItem('otiActiveSession', JSON.stringify({
+        user: APP.currentUser,
+        savedAt: Date.now()
+      }));
+    }
+  }catch(e){}
 });
 
 // ===== TAREAS ESTUDIANTE =====
@@ -2613,8 +2671,46 @@ renderFbPosts();
 updateCounters();
 // Audit: log app start
 logAudit('sistema','Sistema iniciado · C.E. Otilia Peláez','Sistema');
+// ── Auto-restore sesión activa al abrir la página ────────────────
+function tryAutoRestoreSession(){
+  try{
+    // Método 1: sesión activa guardada
+    var activeRaw = localStorage.getItem('otiActiveSession');
+    if(activeRaw){
+      var active = JSON.parse(activeRaw);
+      // Válida por 7 días
+      if(active && active.user && (Date.now() - active.savedAt) < 7*24*60*60*1000){
+        // Esperar a que APP cargue de Firebase
+        setTimeout(function(){
+          if(!APP.currentUser){
+            loginAs(active.user);
+            toast('👋 Bienvenido/a de nuevo, '+active.user.name+'!','success');
+          }
+        }, 800);
+        return;
+      } else {
+        localStorage.removeItem('otiActiveSession');
+      }
+    }
+    // Método 2: cuenta guardada en sessiones
+    var sessions = JSON.parse(localStorage.getItem('otiSessions')||'{}');
+    var keys = Object.keys(sessions);
+    if(keys.length===1){
+      // Si solo hay una cuenta guardada, intentar auto-login
+      var s = sessions[keys[0]];
+      if(s && s.email && s.pass){
+        setTimeout(function(){
+          if(!APP.currentUser) doLoginWith(s.email, s.pass);
+        }, 600);
+      }
+    }
+  }catch(e){}
+}
+
 // Load remembered accounts
 loadRememberedAccounts();
+// Auto-restaurar sesión si la había
+setTimeout(tryAutoRestoreSession, 400);
 
 // ===== GRADE / CICLO LOGIC =====
 function checkRegGrado(){
@@ -6299,6 +6395,7 @@ if(!APP.carreras) APP.carreras = [
    uniforme:'Camisa y Pantalón de salida (igual que Multimedia)', duracion:'3 años (4°-6° Secundaria)'},
 ];
 if(PERSIST_KEYS.indexOf('carreras')===-1) PERSIST_KEYS.push('carreras');
+if(PERSIST_KEYS.indexOf('profilePhotos')===-1) PERSIST_KEYS.push('profilePhotos');
 
 function renderCarrerasAdmin(){
   var el = document.getElementById('carreras-admin-grid');
