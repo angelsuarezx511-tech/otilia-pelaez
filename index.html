@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" style="overflow-x:hidden;">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <title>Centro Educativo Otilia Peláez</title>
   <link rel="icon" href="imagenes/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body style="overflow-x:hidden;max-width:100vw;">
 
 <!-- ===================== BARRA PÚBLICA SUPERIOR ===================== -->
 <div id="top-bar-public">
@@ -196,7 +196,7 @@
 
 <div id="page-home" class="page">
   <div id="hero">
-    <div style="position:relative;z-index:1;">
+    <div style="position:relative;z-index:1;text-align:center;max-width:800px;margin:0 auto;">
       <div class="hero-badge">📚 MINERD · DISTRITO EDUCATIVO 10-02</div>
       <h1>Centro Educativo<br><span>Otilia Peláez</span></h1>
       <p class="hero-sub">Formando ciudadanos íntegros en Sabana Perdida, Santo Domingo Norte desde 1978</p>
@@ -913,7 +913,7 @@
   <div class="role-home-banner" style="background:linear-gradient(135deg,#1a2a50,#0d1f3e);">
     <div class="role-home-inner">
       <div class="role-avatar-wrap">
-        <div class="role-avatar" id="admin-avatar-display">🏫</div>
+        <div class="role-avatar" id="admin-avatar-display"><img src="imagenes/logo_otilia_pelaez.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.src='';this.parentElement.textContent=this.parentElement.id.includes('admin')?'🏫':this.parentElement.id.includes('prof')?'👨‍🏫':this.parentElement.id.includes('est')?'🎓':this.parentElement.id.includes('padre')?'👪':'🏥'"></div>
         <label class="role-avatar-edit" title="Cambiar foto">📷<input type="file" accept="image/*" onchange="changeProfilePhoto(event,'admin')" style="display:none;"></label>
       </div>
       <div>
@@ -2493,7 +2493,7 @@
   <div class="role-home-banner" style="background:linear-gradient(135deg,#0d2a1f,#0a3d2e);">
     <div class="role-home-inner">
       <div class="role-avatar-wrap">
-        <div class="role-avatar" id="prof-avatar-display">👨‍🏫</div>
+        <div class="role-avatar" id="prof-avatar-display"><img src="imagenes/logo_otilia_pelaez.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.src='';this.parentElement.textContent=this.parentElement.id.includes('admin')?'🏫':this.parentElement.id.includes('prof')?'👨‍🏫':this.parentElement.id.includes('est')?'🎓':this.parentElement.id.includes('padre')?'👪':'🏥'"></div>
         <label class="role-avatar-edit" title="Cambiar foto">📷<input type="file" accept="image/*" onchange="changeProfilePhoto(event,'prof')" style="display:none;"></label>
       </div>
       <div>
@@ -2604,7 +2604,7 @@
   <div class="role-home-banner" style="background:linear-gradient(135deg,#16213e,#0f3460);">
     <div class="role-home-inner">
       <div class="role-avatar-wrap">
-        <div class="role-avatar" id="est-avatar-display">🎓</div>
+        <div class="role-avatar" id="est-avatar-display"><img src="imagenes/logo_otilia_pelaez.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.src='';this.parentElement.textContent=this.parentElement.id.includes('admin')?'🏫':this.parentElement.id.includes('prof')?'👨‍🏫':this.parentElement.id.includes('est')?'🎓':this.parentElement.id.includes('padre')?'👪':'🏥'"></div>
         <label class="role-avatar-edit" title="Cambiar foto">📷<input type="file" accept="image/*" onchange="changeProfilePhoto(event,'est')" style="display:none;"></label>
       </div>
       <div>
@@ -2806,7 +2806,7 @@
   <div class="role-home-banner" style="background:linear-gradient(135deg,#1a3a5c,#0f3460);">
     <div class="role-home-inner">
       <div class="role-avatar-wrap">
-        <div class="role-avatar" id="padre-avatar-display">👪</div>
+        <div class="role-avatar" id="padre-avatar-display"><img src="imagenes/logo_otilia_pelaez.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.src='';this.parentElement.textContent=this.parentElement.id.includes('admin')?'🏫':this.parentElement.id.includes('prof')?'👨‍🏫':this.parentElement.id.includes('est')?'🎓':this.parentElement.id.includes('padre')?'👪':'🏥'"></div>
         <label class="role-avatar-edit" title="Cambiar foto">📷<input type="file" accept="image/*" onchange="changeProfilePhoto(event,'padre')" style="display:none;"></label>
       </div>
       <div>
@@ -3194,7 +3194,7 @@
   <div class="role-home-banner" style="background:linear-gradient(135deg,#0f4c75,#1b6ca8);">
     <div class="role-home-inner">
       <div class="role-avatar-wrap">
-        <div class="role-avatar" id="enfer-avatar-display">🏥</div>
+        <div class="role-avatar" id="enfer-avatar-display"><img src="imagenes/logo_otilia_pelaez.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.src='';this.parentElement.textContent=this.parentElement.id.includes('admin')?'🏫':this.parentElement.id.includes('prof')?'👨‍🏫':this.parentElement.id.includes('est')?'🎓':this.parentElement.id.includes('padre')?'👪':'🏥'"></div>
         <label class="role-avatar-edit" title="Cambiar foto">📷<input type="file" accept="image/*" onchange="changeProfilePhoto(event,'enfer')" style="display:none;"></label>
       </div>
       <div>
