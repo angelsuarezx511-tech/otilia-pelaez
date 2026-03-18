@@ -65,14 +65,23 @@ const FIRESTORE_DOC = 'configuracion/principal';
 
 // Keys we persist
 const PERSIST_KEYS = [
+  // Contenido académico
   'announcements','students','notas','ausencias','inscripciones',
   'reportes','padres','mensajes','profesores','galeria','tareas',
   'horarios','_horarioEdit','destacados','honorConfig','auditLog',
+  // Bot y configuración
   'botConfig','botPadreConfig','botProfeConfig','botAdminConfig',
   '_botStats','loginDesign','registroDesign','reglamento','categoriasConfig',
+  // Secciones y diseño
   'customSections','districtConnected','districtEmail','cfgHero',
   'cfgNiveles','cfgInstalaciones','cfgCalendario','cfgTestimonios',
-  'cfgMaestros','cfgFooter','cfgInfo','config','accounts'
+  'cfgMaestros','cfgFooter','cfgInfo','config','accounts',
+  // Módulos extra
+  'pagos','eventos','_notifHistory','_userNotifs','productos',
+  'consultas','stockEnfer','carreras','profilePhotos',
+  'blog','egresados','maestrosPublicos',
+  'sesiones','customSections',
+  'reportesAsistencia','egresados'
 ];
 
 // Firebase instance (initialized on first save/load)
@@ -98,6 +107,28 @@ function initFirebase(){
       _firebaseReady = true;
       _usingFirebase = true;
       console.log('✅ Firebase conectado');
+      // ── Listener en tiempo real — sincroniza cambios de otros dispositivos ──
+      var chunks = ['config','datos','misc','media'];
+      chunks.forEach(function(chunkKey){
+        _db.collection('otilia').doc(chunkKey).onSnapshot(function(doc){
+          if(!doc.exists) return;
+          var d = doc.data();
+          PERSIST_KEYS.forEach(function(k){
+            if(d[k] !== undefined){
+              // No sobreescribir si hay usuario activo haciendo cambios (evitar race condition)
+              APP[k] = d[k];
+            }
+          });
+          // Siempre garantizar cuentas críticas
+          if(!APP.accounts) APP.accounts = {};
+          APP.accounts.enfermeria = {email:'enfermeriaoti@gmail.com',password:'ENFEROTI@2025',role:'enfermeria',name:'Enfermería'};
+          // Refrescar UI si hay usuario logueado
+          if(APP.currentUser){
+            if(typeof updateCounters==='function') updateCounters();
+            if(typeof renderCustomSections==='function') renderCustomSections();
+          }
+        }, function(err){ console.warn('Listener error:', err); });
+      });
       resolve(true);
     }catch(e){
       console.warn('Error Firebase:', e);
@@ -107,39 +138,58 @@ function initFirebase(){
 }
 
 // ── SAVE ──────────────────────────────────────────
+// Auto-save interval — every 10 seconds if logged in (más frecuente que los 30s anteriores)
+setInterval(function(){
+  if(APP.currentUser) persistSave();
+}, 10000);
+
 function persistSave(){
   var data={};
   PERSIST_KEYS.forEach(function(k){ if(APP[k]!==undefined) data[k]=APP[k]; });
 
-  // 1. Always save to localStorage (instant, offline backup)
+  // 1. Siempre guardar en localStorage (instantáneo, funciona offline)
   try{
     localStorage.setItem(STORE_KEY, JSON.stringify(data));
   }catch(e){ console.warn('localStorage save error:',e); }
 
-  // 2. Save to Firebase if available (real database, shared across devices)
+  // 2. Guardar en Firebase (global, todos los dispositivos)
   if(_firebaseReady && _db){
-    // Split into chunks to avoid Firestore 1MB doc limit
     var chunks = splitIntoChunks(data);
     Object.keys(chunks).forEach(function(chunkKey){
       _db.collection('otilia').doc(chunkKey).set(chunks[chunkKey])
-        .catch(function(e){ console.warn('Firebase save error ('+chunkKey+'):', e); });
+        .then(function(){ _pendingSave = false; })
+        .catch(function(e){ console.warn('Firebase save error ('+chunkKey+'):', e); _pendingSave = true; });
     });
+  } else {
+    // Sin Firebase — marcar como pendiente para reintentar
+    _pendingSave = true;
   }
 }
 
 function splitIntoChunks(data){
-  // Separate heavy arrays from config to avoid hitting Firestore limits
-  var chunk1 = {}, chunk2 = {}, chunk3 = {};
-  var bigArrays = ['students','padres','notas','ausencias','inscripciones','galeria','auditLog','mensajes'];
-  var configs   = ['botConfig','botPadreConfig','botProfeConfig','botAdminConfig','loginDesign',
-                   'registroDesign','reglamento','categoriasConfig','cfgHero','cfgFooter',
-                   'cfgInfo','config','accounts','honorConfig','horarios'];
+  var chunk1 = {}, chunk2 = {}, chunk3 = {}, chunk4 = {};
+  // Chunk1: config/settings (small)
+  var configs = ['botConfig','botPadreConfig','botProfeConfig','botAdminConfig','loginDesign',
+    'registroDesign','reglamento','categoriasConfig','cfgHero','cfgFooter','cfgInfo',
+    'config','accounts','honorConfig','horarios','carreras','maestrosPublicos',
+    'pagos','productos','stockEnfer','eventos','customSections'];
+  // Chunk2: big student/academic data
+  var bigData = ['students','padres','notas','ausencias','inscripciones','galeria',
+    'auditLog','mensajes','profesores','tareas'];
+  // Chunk3: notifications & misc
+  var notifs = ['_notifHistory','_userNotifs','_botStats','blog','egresados',
+    'consultas','announcements','destacados','sesiones','reportesAsistencia'];
+  // Chunk4: media/photos
+  var media = ['profilePhotos'];
+
   Object.keys(data).forEach(function(k){
-    if(bigArrays.indexOf(k) > -1) chunk2[k] = data[k];
-    else if(configs.indexOf(k) > -1) chunk1[k] = data[k];
-    else chunk3[k] = data[k];
+    if(configs.indexOf(k)  > -1) chunk1[k] = data[k];
+    else if(bigData.indexOf(k) > -1) chunk2[k] = data[k];
+    else if(notifs.indexOf(k)  > -1) chunk3[k] = data[k];
+    else if(media.indexOf(k)   > -1) chunk4[k] = data[k];
+    else chunk3[k] = data[k]; // fallback
   });
-  return { 'config': chunk1, 'datos': chunk2, 'misc': chunk3 };
+  return { 'config': chunk1, 'datos': chunk2, 'misc': chunk3, 'media': chunk4 };
 }
 
 // ── LOAD ──────────────────────────────────────────
@@ -162,7 +212,7 @@ function persistLoad(){
   // Then sync from Firebase (newer data from other devices)
   if(_firebaseReady && _db){
     var merged = {};
-    var chunks = ['config','datos','misc'];
+    var chunks = ['config','datos','misc','media'];
     var loaded = 0;
     chunks.forEach(function(chunkKey){
       _db.collection('otilia').doc(chunkKey).get()
@@ -228,7 +278,10 @@ initFirebase().then(function(connected){
 });
 
 // Auto-save every 30 seconds
-setInterval(function(){ if(APP.currentUser && APP.currentUser.role==='admin') persistSave(); }, 30000);
+// Auto-save cada 10 seg para cualquier usuario logueado
+setInterval(function(){
+  if(APP.currentUser) persistSave();
+}, 10000);
 
 const FB_POSTS=[
   {id:1,text:'¡Bienvenidos al nuevo año escolar 2025-2026! Estamos listos para brindarles la mejor educación. 🎒📚',date:'Hace 2 días',likes:'48',emoji:'🏫'},
@@ -340,6 +393,13 @@ function doLogin(){
   // Check profesor accounts
   const prof=APP.profesores?APP.profesores.find(p=>p.email.toLowerCase()===email&&p.pass===pass):null;
   if(prof)return loginAs({role:'profesor',name:prof.nombre+' '+prof.apellido,email,profId:prof.id});
+  // Admins extra asignados desde el panel
+  var extraAdmins = APP.accounts.admins || [];
+  for(var ai=0; ai<extraAdmins.length; ai++){
+    var ea = extraAdmins[ai];
+    if(ea && email===ea.email.toLowerCase() && pass===ea.password)
+      return loginAs({role:'admin', name:ea.name||'Administrador', email:ea.email});
+  }
   // Enfermería
   var enf=APP.accounts.enfermeria;
   if(enf && email===enf.email.toLowerCase() && pass===enf.password)
@@ -646,6 +706,8 @@ function showAdminSection(id){
 }
 
 function logout(){
+  // Guardar todo antes de salir
+  try{ persistSave(); }catch(e){}
   logAudit('login','Cierre de sesión: '+(APP.currentUser&&APP.currentUser.name||'—'),APP.currentUser&&APP.currentUser.name);
   showChatWidget(false);
   showAllBotFabs(false);
@@ -766,6 +828,7 @@ function saveAnnouncement(){
   if(!titulo||!desc){toast('Complete título y descripción','error');return;}
   APP.announcements.unshift({id:Date.now(),tipo,titulo,desc,fecha:fecha||new Date().toISOString().split('T')[0],img:imgEl.src&&imgEl.style.display!=='none'?imgEl.src:''});
   closeModal('modal-ann');
+  persistSave();
   ['ann-titulo','ann-desc','ann-fecha'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
   document.getElementById('ann-img-preview').style.display='none';
   document.getElementById('ann-img-placeholder').style.display='block';
@@ -1128,7 +1191,24 @@ function showPadreSection(id){
 }
 
 function renderAdminData(){renderAnnouncements();renderStudentTable();renderNotasTable();renderAusencias();renderInscripciones();renderReportes();renderMensajes();renderCustomSections();updateCounters();setTimeout(renderDashboardGraficas,300);}
-function renderProfesorData(){populateStudentSelect();renderNotasTable();renderAusencias();renderProfeRecords();renderMensajes();}
+function renderProfesorData(){populateStudentSelect();renderNotasTable();renderAusencias();renderProfeRecords();renderMensajes();populateAsistGrado();}
+
+function populateAsistGrado(){
+  var sel = document.getElementById('asist-grado');
+  if(!sel) return;
+  // Limpiar opciones excepto la primera
+  while(sel.options.length > 1) sel.remove(1);
+  // Obtener grados únicos
+  var grados = [...new Set((APP.students||[]).map(function(s){ return s.grado; }))].sort();
+  grados.forEach(function(g){
+    var o = document.createElement('option');
+    o.value = g; o.textContent = g;
+    sel.appendChild(o);
+  });
+  // Set today's date by default
+  var fechaEl = document.getElementById('asist-fecha');
+  if(fechaEl && !fechaEl.value) fechaEl.value = new Date().toISOString().split('T')[0];
+}
 
 // ===== TABS =====
 function showDashSection(id,el){
@@ -1660,8 +1740,12 @@ function renderRolesPanel(){
   var list=document.getElementById('roles-lista');
   if(!list)return;
   var users=[];
-  // Admin
-  users.push({name:'Administrador',email:'admin@otilia.edu',role:'admin',emoji:'⚙️'});
+  // Admin principal
+  users.push({name:APP.accounts.admin.name||'Administración', email:APP.accounts.admin.email, role:'admin', emoji:'⚙️', tipo:'admin_main'});
+  // Admins extra
+  (APP.accounts.admins||[]).forEach(function(a){
+    users.push({name:a.name||a.email, email:a.email, role:'admin', emoji:'⚙️', tipo:'admin_extra', ref:a});
+  });
   // Profesores
   if(APP.profesores){
     APP.profesores.forEach(function(p){users.push({name:p.nombre+' '+p.apellido,email:p.email,role:'profesor',emoji:'👨‍🏫',ref:p,tipo:'profesor'});});
@@ -1672,13 +1756,16 @@ function renderRolesPanel(){
   APP.students.forEach(function(s){users.push({name:s.nombre+' '+s.apellido,email:s.email,role:'estudiante',emoji:'🎓',ref:s,tipo:'estudiante',grado:s.grado});});
   // Padres
   APP.padres.forEach(function(p){users.push({name:p.nombre+' '+p.apellido,email:p.email,role:'padre',emoji:'👪',ref:p,tipo:'padre'});});
+  // Enfermería
+  var enf=APP.accounts&&APP.accounts.enfermeria;
+  if(enf) users.push({name:enf.name||'Enfermería',email:enf.email,role:'enfermeria',emoji:'🏥',tipo:'enfermeria'});
 
   var filtered=currentRoleFilter==='todos'?users:users.filter(function(u){return u.role===currentRoleFilter;});
   if(!filtered.length){list.innerHTML='<p style="color:#888;font-size:13px;padding:20px;">No hay usuarios en esta categoría.</p>';return;}
 
-  var roleLabels={admin:'⚙️ Admin',profesor:'👨‍🏫 Profesor',estudiante:'🎓 Estudiante',padre:'👪 Padre'};
-  var roleCss={admin:'role-badge-admin',profesor:'role-badge-profesor',estudiante:'role-badge-estudiante',padre:'role-badge-padre'};
-  var roleOptions=['admin','profesor','estudiante','padre'];
+  var roleLabels={admin:'⚙️ Admin',profesor:'👨‍🏫 Profesor',estudiante:'🎓 Estudiante',padre:'👪 Padre',enfermeria:'🏥 Enfermería'};
+  var roleCss={admin:'role-badge-admin',profesor:'role-badge-profesor',estudiante:'role-badge-estudiante',padre:'role-badge-padre',enfermeria:'role-badge-admin'};
+  var roleOptions=['admin','profesor','estudiante','padre','enfermeria'];
 
   list.innerHTML=filtered.map(function(u,i){
     var opts=roleOptions.map(function(r){
@@ -1735,20 +1822,70 @@ function saveRolUsuario(){
   toast('Usuario creado como '+tipo,'success');
 }
 
-function applyRoleChange(idx,email,oldRole){
-  var sel=document.getElementById('role-sel-'+idx);
-  if(!sel)return;
-  var newRole=sel.value;
-  if(newRole===oldRole)return toast('El usuario ya tiene ese rol','info');
-  toast('Rol actualizado a '+newRole,'success');
+function applyRoleChange(idx, email, oldRole){
+  var sel = document.getElementById('role-sel-'+idx);
+  if(!sel) return;
+  var newRole = sel.value;
+  if(newRole === oldRole) return toast('El usuario ya tiene ese rol','info');
+  if(!confirm('¿Cambiar el rol de este usuario de "'+oldRole+'" a "'+newRole+'"? Deberá iniciar sesión de nuevo.')) return;
+
+  // Find user data from old collection
+  var userData = null;
+  if(oldRole==='estudiante') userData = (APP.students||[]).find(function(s){ return s.email===email; });
+  else if(oldRole==='padre')    userData = (APP.padres||[]).find(function(p){ return p.email===email; });
+  else if(oldRole==='profesor') userData = (APP.profesores||[]).find(function(p){ return p.email===email; });
+
+  if(!userData && oldRole!=='admin'){ toast('Usuario no encontrado','error'); return; }
+
+  var nombre   = userData ? (userData.nombre||'') : '';
+  var apellido = userData ? (userData.apellido||'') : '';
+  var pass     = userData ? (userData.pass||'') : '';
+
+  // Remove from old collection
+  if(oldRole==='estudiante') APP.students   = (APP.students||[]).filter(function(s){ return s.email!==email; });
+  else if(oldRole==='padre')    APP.padres   = (APP.padres||[]).filter(function(p){ return p.email!==email; });
+  else if(oldRole==='profesor') APP.profesores = (APP.profesores||[]).filter(function(p){ return p.email!==email; });
+
+  // Add to new collection
+  if(newRole==='profesor'){
+    if(!APP.profesores) APP.profesores=[];
+    APP.profesores.push({nombre:nombre, apellido:apellido, email:email, pass:pass, tipo:'profesor'});
+  } else if(newRole==='estudiante'){
+    if(!APP.students) APP.students=[];
+    APP.students.push({id:'ST'+Date.now(), nombre:nombre, apellido:apellido, email:email, pass:pass, grado:'1° Primaria', tipo:'estudiante'});
+  } else if(newRole==='padre'){
+    if(!APP.padres) APP.padres=[];
+    APP.padres.push({nombre:nombre, apellido:apellido, email:email, pass:pass, hijo:'', telefono:'', tipo:'padre'});
+  } else if(newRole==='admin'){
+    // Agregar como admin extra en accounts
+    if(!APP.accounts.admins) APP.accounts.admins = [];
+    // Verificar que no exista ya
+    var yaAdmin = APP.accounts.admins.find(function(a){ return a.email===email; });
+    if(!yaAdmin){
+      APP.accounts.admins.push({
+        email: email,
+        password: pass || userData.pass || '',
+        role: 'admin',
+        name: nombre + (apellido?' '+apellido:'')
+      });
+    }
+  }
+
+  persistSave();
   renderRolesPanel();
+  toast('✅ Rol cambiado a '+newRole+'. El usuario debe iniciar sesión de nuevo.','success');
+  logAudit('roles','Rol cambiado: '+email+' de '+oldRole+' a '+newRole);
 }
 
 function deleteUser(email,tipo){
+  if(tipo==='admin_main'){toast('No se puede eliminar el admin principal.','error');return;}
   if(!confirm('¿Eliminar este usuario?'))return;
-  if(tipo==='estudiante') APP.students=APP.students.filter(function(s){return s.email!==email;});
-  else if(tipo==='padre') APP.padres=APP.padres.filter(function(p){return p.email!==email;});
-  else if(tipo==='profesor'&&APP.profesores) APP.profesores=APP.profesores.filter(function(p){return p.email!==email;});
+  if(tipo==='estudiante')   APP.students  = APP.students.filter(function(s){return s.email!==email;});
+  else if(tipo==='padre')   APP.padres    = APP.padres.filter(function(p){return p.email!==email;});
+  else if(tipo==='profesor'&&APP.profesores) APP.profesores = APP.profesores.filter(function(p){return p.email!==email;});
+  else if(tipo==='admin_extra'&&APP.accounts.admins) APP.accounts.admins = APP.accounts.admins.filter(function(a){return a.email!==email;});
+  else if(tipo==='enfermeria'){/* no eliminar enfermería */return;}
+  persistSave();
   renderRolesPanel();
   toast('Usuario eliminado','success');
 }
@@ -2050,18 +2187,26 @@ function resetWebDesign(){
 // ================================================================
 
 // Obtener foto guardada para un correo
-function getPhotoForEmail(email){
+// ── Clave única por correo + rol para separar fotos ──────────────
+function photoKey(email, role){
+  return (email||'') + '::' + (role||'');
+}
+
+function getPhotoForEmail(email, role){
   try{
     var all = JSON.parse(localStorage.getItem('otiUserPhotos')||'{}');
-    return all[email] || null;
+    // Buscar por email+rol (nuevo sistema)
+    var key = photoKey(email, role);
+    if(all[key]) return all[key];
+    return null;
   }catch(e){ return null; }
 }
 
-// Guardar foto para un correo
-function savePhotoForEmail(email, src){
+function savePhotoForEmail(email, src, role){
   try{
     var all = JSON.parse(localStorage.getItem('otiUserPhotos')||'{}');
-    all[email] = src;
+    var key = photoKey(email, role);
+    all[key] = src;
     localStorage.setItem('otiUserPhotos', JSON.stringify(all));
   }catch(e){}
 }
@@ -2094,18 +2239,33 @@ function restoreProfilePhotos(){
     if(!email) return;
     var roleMap={admin:'admin',profesor:'prof',estudiante:'est',padre:'padre',enfermeria:'enfer'};
     var role = roleMap[APP.currentUser.role] || APP.currentUser.role;
-    // 1. Aplicar desde localStorage de inmediato (rápido)
-    var localSrc = getPhotoForEmail(email);
-    if(localSrc) applyPhotoToUI(role, localSrc);
-    // 2. Buscar en Firebase (más actualizado, de otro dispositivo)
+    var key = photoKey(email, role);
+
+    // 1. localStorage — clave email+rol única
+    var localSrc = getPhotoForEmail(email, role);
+
+    // 2. APP.profilePhotos (Firebase) — también por clave
+    var appSrc = APP.profilePhotos && APP.profilePhotos[key];
+
+    // Aplicar la más reciente disponible
+    var bestSrc = appSrc || localSrc;
+    if(bestSrc){
+      applyPhotoToUI(role, bestSrc);
+      // Sincronizar localStorage si Firebase tiene algo más nuevo
+      if(appSrc && appSrc !== localSrc) savePhotoForEmail(email, appSrc, role);
+    }
+
+    // 3. Buscar en Firebase cloud por email+rol
     if(_firebaseReady && _db){
-      _db.collection('otilia_fotos').doc(email.replace(/[@.]/g,'_')).get()
+      var docId = (email+'__'+role).replace(/[@.]/g,'_');
+      _db.collection('otilia_fotos').doc(docId).get()
         .then(function(doc){
           if(doc.exists && doc.data().foto){
             var cloudSrc = doc.data().foto;
-            // Si la de la nube es diferente, actualizamos
-            if(cloudSrc !== localSrc){
-              savePhotoForEmail(email, cloudSrc);
+            if(cloudSrc !== bestSrc){
+              savePhotoForEmail(email, cloudSrc, role);
+              if(!APP.profilePhotos) APP.profilePhotos={};
+              APP.profilePhotos[key] = cloudSrc;
               applyPhotoToUI(role, cloudSrc);
             }
           }
@@ -2132,14 +2292,18 @@ function changeProfilePhoto(event, role){
     URL.revokeObjectURL(url);
     var email = APP.currentUser && APP.currentUser.email;
     if(!email){ toast('No hay sesión activa','error'); return; }
-    // 1. localStorage (instantáneo, offline)
-    savePhotoForEmail(email, src);
-    // 2. Firebase (nube, todos los dispositivos)
+    // Rol real del usuario actual
+    var userRoleMap={admin:'admin',profesor:'prof',estudiante:'est',padre:'padre',enfermeria:'enfer'};
+    var userRole = userRoleMap[APP.currentUser.role] || role;
+    // 1. localStorage por email+rol (separado por usuario Y rol)
+    savePhotoForEmail(email, src, userRole);
+    // 2. Firebase — doc único por email+rol
     if(_firebaseReady && _db){
-      _db.collection('otilia_fotos').doc(email.replace(/[@.]/g,'_')).set({
-        email: email, foto: src, updatedAt: Date.now()
+      var docId = (email+'__'+userRole).replace(/[@.]/g,'_');
+      _db.collection('otilia_fotos').doc(docId).set({
+        email: email, role: userRole, foto: src, updatedAt: Date.now()
       }).then(function(){
-        toast('✅ Foto guardada en la nube — disponible en todos tus dispositivos','success');
+        toast('✅ Foto guardada en la nube','success');
       }).catch(function(){ toast('Foto guardada localmente','info'); });
     } else {
       toast('✅ Foto guardada','success');
@@ -4831,10 +4995,10 @@ function renderUserNotifs(containerId){
 }
 
 // Add to PERSIST_KEYS retroactively
-if(PERSIST_KEYS.indexOf('pagos')===-1)    PERSIST_KEYS.push('pagos');
-if(PERSIST_KEYS.indexOf('eventos')===-1)  PERSIST_KEYS.push('eventos');
-if(PERSIST_KEYS.indexOf('_notifHistory')===-1) PERSIST_KEYS.push('_notifHistory');
-if(PERSIST_KEYS.indexOf('_userNotifs')===-1)   PERSIST_KEYS.push('_userNotifs');
+
+
+
+
 
 // Hook notifications into existing operations
 var _origSaveHorario = typeof saveHorario==='function' ? saveHorario : null;
@@ -6438,8 +6602,8 @@ if(!APP.carreras) APP.carreras = [
    desc:'Diseño gráfico, ilustración digital, identidad visual y artes aplicadas a la comunicación.',
    uniforme:'Camisa y Pantalón de salida (igual que Multimedia)', duracion:'3 años (4°-6° Secundaria)'},
 ];
-if(PERSIST_KEYS.indexOf('carreras')===-1) PERSIST_KEYS.push('carreras');
-if(PERSIST_KEYS.indexOf('profilePhotos')===-1) PERSIST_KEYS.push('profilePhotos');
+
+
 
 function renderCarrerasAdmin(){
   var el = document.getElementById('carreras-admin-grid');
@@ -6605,7 +6769,7 @@ function renderAnunciosPublic(){
 //  📰 BLOG / NOTICIAS
 // ================================================================
 if(!APP.blog) APP.blog = [];
-if(PERSIST_KEYS.indexOf('blog')===-1) PERSIST_KEYS.push('blog');
+
 
 function saveBlog(){
   var titulo    = (document.getElementById('blog-titulo')    ||{}).value.trim();
@@ -6719,7 +6883,7 @@ function renderBlogPublic(){
 //  🎓 EGRESADOS
 // ================================================================
 if(!APP.egresados) APP.egresados = [];
-if(PERSIST_KEYS.indexOf('egresados')===-1) PERSIST_KEYS.push('egresados');
+
 
 function saveEgresado(){
   var nombre    = (document.getElementById('egresado-nombre')    ||{}).value.trim();
@@ -6859,7 +7023,7 @@ if(!APP.maestrosPublicos) APP.maestrosPublicos = [
   {id:'M7',nombre:'Maestro de Inglés',cargo:'Inglés',nivel:'Todos los niveles',icon:'👨‍🏫',desc:'',directivo:false},
   {id:'M8',nombre:'Maestro de Ed. Física',cargo:'Educación Física',nivel:'Todos los niveles',icon:'👨‍🏫',desc:'',directivo:false},
 ];
-if(PERSIST_KEYS.indexOf('maestrosPublicos')===-1) PERSIST_KEYS.push('maestrosPublicos');
+
 
 function saveMaestroAdmin(){
   var nombre   =(document.getElementById('maestro-nombre')   ||{}).value.trim();
@@ -7171,7 +7335,7 @@ function renderGraficaNotas(studentId){
 //  📰 BLOG / NOTICIAS
 // ================================================================
 if(!APP.blog) APP.blog = [];
-if(PERSIST_KEYS.indexOf('blog')===-1) PERSIST_KEYS.push('blog');
+
 
 const BLOG_CATS = {
   logro:        {label:'🏆 Logro',        color:'#d4af37', bg:'#fef9c3'},
@@ -7301,7 +7465,7 @@ function verNoticia(id){
 //  🎓 EGRESADOS / ALUMNI
 // ================================================================
 if(!APP.egresados) APP.egresados = [];
-if(PERSIST_KEYS.indexOf('egresados')===-1) PERSIST_KEYS.push('egresados');
+
 
 function saveEgresado(){
   var nombre = (document.getElementById('egr-reg-nombre')||{}).value.trim();
@@ -7738,3 +7902,474 @@ showPage = function(id){
     if(btn) btn.textContent='☰';
   }
 };
+
+// ================================================================
+//  📅 ASISTENCIA — Panel del Maestro
+// ================================================================
+
+// Estado local de asistencia
+var _asistenciaActual = {}; // { studentId: 'presente'|'ausente'|'tardanza' }
+var _asistObs = {};         // { studentId: 'observación' }
+
+function initAsistenciaProfe(){
+  // Poner fecha de hoy por defecto
+  var fechaEl = document.getElementById('asist-fecha');
+  if(fechaEl && !fechaEl.value){
+    fechaEl.value = new Date().toISOString().split('T')[0];
+  }
+  // Poblar select de grados
+  var gradoSel = document.getElementById('asist-grado');
+  if(gradoSel && gradoSel.options.length <= 1){
+    var grados = [...new Set((APP.students||[]).map(function(s){ return s.grado; }).filter(Boolean))].sort();
+    grados.forEach(function(g){
+      var o = document.createElement('option');
+      o.value = g; o.textContent = g;
+      gradoSel.appendChild(o);
+    });
+  }
+  cargarHistorialAsistencia();
+}
+
+function cargarListaAsistencia(){
+  var grado = (document.getElementById('asist-grado')||{}).value;
+  var fecha = (document.getElementById('asist-fecha')||{}).value;
+  var wrap  = document.getElementById('asist-lista-wrap');
+  var empty = document.getElementById('asist-empty');
+  var res   = document.getElementById('asist-resumen');
+  var acc   = document.getElementById('asist-acciones');
+
+  if(!grado){
+    if(wrap)  wrap.style.display='none';
+    if(empty) empty.style.display='block';
+    if(res)   res.style.display='none';
+    return;
+  }
+
+  var estudiantes = (APP.students||[]).filter(function(s){ return s.grado===grado; });
+  if(!estudiantes.length){
+    if(empty){ empty.style.display='block'; empty.querySelector('p').textContent='No hay estudiantes en este grado.'; }
+    if(wrap) wrap.style.display='none';
+    return;
+  }
+
+  // Reset estado
+  _asistenciaActual = {};
+  _asistObs = {};
+  estudiantes.forEach(function(s){ _asistenciaActual[s.id] = 'presente'; });
+
+  // Render tabla
+  var tbody = document.getElementById('asist-tabla-body');
+  if(tbody){
+    tbody.innerHTML = estudiantes.map(function(s, i){
+      return '<tr style="border-bottom:1px solid var(--border);" id="asist-row-'+s.id+'">'
+        +'<td style="padding:9px 14px;color:#888;font-size:12px;">'+(i+1)+'</td>'
+        +'<td style="padding:9px 14px;">'
+          +'<div style="font-weight:700;color:var(--navy);">'+s.nombre+' '+s.apellido+'</div>'
+          +'<div style="font-size:11px;color:#888;">'+s.grado+(s.carrera?' · '+s.carrera:'')+'</div>'
+        +'</td>'
+        +'<td style="padding:9px 14px;text-align:center;">'
+          +'<input type="radio" name="asist-'+s.id+'" value="presente" checked '
+          +'onchange="setAsistencia(\''+s.id+'\',\'presente\')" '
+          +'style="width:18px;height:18px;accent-color:#16a34a;cursor:pointer;">'
+        +'</td>'
+        +'<td style="padding:9px 14px;text-align:center;">'
+          +'<input type="radio" name="asist-'+s.id+'" value="ausente" '
+          +'onchange="setAsistencia(\''+s.id+'\',\'ausente\')" '
+          +'style="width:18px;height:18px;accent-color:#dc2626;cursor:pointer;">'
+        +'</td>'
+        +'<td style="padding:9px 14px;text-align:center;">'
+          +'<input type="radio" name="asist-'+s.id+'" value="tardanza" '
+          +'onchange="setAsistencia(\''+s.id+'\',\'tardanza\')" '
+          +'style="width:18px;height:18px;accent-color:#d97706;cursor:pointer;">'
+        +'</td>'
+        +'<td style="padding:9px 14px;">'
+          +'<input type="text" placeholder="Observación..." id="obs-'+s.id+'" '
+          +'onchange="_asistObs[\''+s.id+'\']=this.value" '
+          +'style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;">'
+        +'</td>'
+        +'</tr>';
+    }).join('');
+  }
+
+  if(wrap)  wrap.style.display='block';
+  if(empty) empty.style.display='none';
+  if(res)   res.style.display='block';
+  if(acc)   acc.style.display='flex';
+  actualizarContadores();
+}
+
+function setAsistencia(id, estado){
+  _asistenciaActual[id] = estado;
+  // Cambiar color de fila
+  var row = document.getElementById('asist-row-'+id);
+  if(row){
+    var colors = {presente:'transparent', ausente:'#fff5f5', tardanza:'#fffbeb'};
+    row.style.background = colors[estado] || 'transparent';
+  }
+  actualizarContadores();
+}
+
+function actualizarContadores(){
+  var vals = Object.values(_asistenciaActual);
+  var p = vals.filter(function(v){ return v==='presente'; }).length;
+  var a = vals.filter(function(v){ return v==='ausente'; }).length;
+  var t = vals.filter(function(v){ return v==='tardanza'; }).length;
+  var el = function(id, v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+  el('asist-presentes-count', p);
+  el('asist-ausentes-count',  a);
+  el('asist-tardanza-count',  t);
+  el('asist-total-count',     vals.length);
+}
+
+function marcarTodos(estado){
+  Object.keys(_asistenciaActual).forEach(function(id){
+    _asistenciaActual[id] = estado;
+    var radio = document.querySelector('input[name="asist-'+id+'"][value="'+estado+'"]');
+    if(radio) radio.checked = true;
+    var row = document.getElementById('asist-row-'+id);
+    if(row){
+      var colors = {presente:'transparent', ausente:'#fff5f5', tardanza:'#fffbeb'};
+      row.style.background = colors[estado];
+    }
+  });
+  actualizarContadores();
+}
+
+function enviarReporteAsistencia(){
+  var grado  = (document.getElementById('asist-grado')||{}).value;
+  var fecha  = (document.getElementById('asist-fecha')||{}).value;
+  if(!grado) return toast('Selecciona un grado primero','error');
+  if(!fecha) return toast('Selecciona una fecha','error');
+  if(!Object.keys(_asistenciaActual).length) return toast('Carga la lista primero','error');
+
+  var estudiantes = (APP.students||[]).filter(function(s){ return s.grado===grado; });
+  var ausentes  = [];
+  var tardanzas = [];
+  var presentes = [];
+
+  estudiantes.forEach(function(s){
+    var estado = _asistenciaActual[s.id] || 'presente';
+    var obs    = _asistObs[s.id] || '';
+    var entry  = {id:s.id, nombre:s.nombre+' '+s.apellido, grado:s.grado, estado:estado, obs:obs};
+    if(estado==='ausente')   ausentes.push(entry);
+    else if(estado==='tardanza') tardanzas.push(entry);
+    else presentes.push(entry);
+    // Guardar en APP.ausencias si es ausente o tardanza
+    if(estado==='ausente'||estado==='tardanza'){
+      if(!APP.ausencias) APP.ausencias=[];
+      var yaExiste = APP.ausencias.find(function(a){
+        return a.studentId===s.id && a.fecha===fecha;
+      });
+      if(!yaExiste){
+        APP.ausencias.push({
+          id:'AU-'+Date.now()+'-'+s.id,
+          studentId: s.id,
+          nombre: s.nombre+' '+s.apellido,
+          grado: s.grado,
+          fecha: fecha,
+          motivo: estado==='tardanza'?'Tardanza':'Sin justificar',
+          obs: obs,
+          reportadoPor: APP.currentUser ? APP.currentUser.name : 'Maestro/a',
+          estado: 'pendiente'
+        });
+      }
+    }
+  });
+
+  // Guardar reporte en historial
+  if(!APP.reportesAsistencia) APP.reportesAsistencia=[];
+  var reporte = {
+    id:'RA-'+Date.now(),
+    fecha: fecha,
+    grado: grado,
+    totalEstudiantes: estudiantes.length,
+    presentes: presentes.length,
+    ausentes: ausentes.length,
+    tardanzas: tardanzas.length,
+    detalleAusentes: ausentes,
+    detalleTardanzas: tardanzas,
+    reportadoPor: APP.currentUser ? APP.currentUser.name : 'Maestro/a',
+    hora: new Date().toLocaleTimeString('es-DO',{hour:'2-digit',minute:'2-digit'})
+  };
+  APP.reportesAsistencia.unshift(reporte);
+  if(PERSIST_KEYS.indexOf('reportesAsistencia')===-1) PERSIST_KEYS.push('reportesAsistencia');
+  if(PERSIST_KEYS.indexOf('ausencias')===-1) PERSIST_KEYS.push('ausencias');
+
+  persistSave();
+
+  // Notificar al admin
+  var msg = '📋 Reporte de asistencia — '+grado+' ('+fecha+'): '
+    +presentes.length+' presentes, '
+    +ausentes.length+' ausentes'
+    +(tardanzas.length?', '+tardanzas.length+' tardanzas':'')
+    +'. Enviado por: '+(APP.currentUser?APP.currentUser.name:'Maestro/a');
+  broadcastNotif('admin', '📅 Asistencia '+grado, msg);
+
+  cargarHistorialAsistencia();
+  logAudit('asistencia','Reporte enviado: '+grado+' ('+fecha+') — '+ausentes.length+' ausentes');
+  toast('✅ Reporte enviado al administrador','success');
+}
+
+function cargarHistorialAsistencia(){
+  var el = document.getElementById('asist-historial');
+  if(!el) return;
+  var reportes = (APP.reportesAsistencia||[]).slice(0,10);
+  if(!reportes.length){
+    el.innerHTML='<p style="color:#888;font-size:13px;">No hay reportes enviados aún.</p>';
+    return;
+  }
+  el.innerHTML = reportes.map(function(r){
+    var ausentesNombres = (r.detalleAusentes||[]).map(function(a){ return a.nombre; }).join(', ');
+    var tardNombres     = (r.detalleTardanzas||[]).map(function(a){ return a.nombre; }).join(', ');
+    return '<div style="background:#f8fafc;border-radius:10px;padding:14px 16px;margin-bottom:10px;border:1px solid var(--border);border-left:3px solid var(--gold);">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px;">'
+      +'<div>'
+        +'<span style="font-weight:800;color:var(--navy);font-size:13px;">'+r.grado+'</span>'
+        +'<span style="color:#888;font-size:12px;margin-left:8px;">'+r.fecha+' · '+r.hora+'</span>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px;">'
+        +'<span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;">✅ '+r.presentes+'</span>'
+        +(r.ausentes?'<span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;">❌ '+r.ausentes+'</span>':'')
+        +(r.tardanzas?'<span style="background:#fef3c7;color:#d97706;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;">⏰ '+r.tardanzas+'</span>':'')
+      +'</div></div>'
+      +(ausentesNombres?'<div style="font-size:12px;color:#dc2626;"><b>Ausentes:</b> '+ausentesNombres+'</div>':'')
+      +(tardNombres?'<div style="font-size:12px;color:#d97706;margin-top:3px;"><b>Tardanzas:</b> '+tardNombres+'</div>':'')
+      +'<div style="font-size:11px;color:#888;margin-top:4px;">Enviado por: '+r.reportadoPor+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// Hook to init when section loads
+var _origShowProfe = showProfeSection;
+showProfeSection = function(id, el){
+  _origShowProfe(id, el);
+  if(id==='profe-ausencias') setTimeout(initAsistenciaProfe, 50);
+};
+
+// ── Admin — ver reportes de asistencia ───────────────────────────
+function renderReportesAsistAdmin(){
+  var el = document.getElementById('admin-reportes-asist-list');
+  if(!el) return;
+  var busq = ((document.getElementById('asist-admin-search')||{}).value||'').toLowerCase();
+  var reportes = (APP.reportesAsistencia||[]).filter(function(r){
+    return !busq || (r.grado+r.reportadoPor+r.fecha).toLowerCase().includes(busq);
+  });
+
+  // KPIs
+  var kpiEl = document.getElementById('admin-asist-kpis');
+  if(kpiEl){
+    var totalReportes = reportes.length;
+    var totalAusentes = reportes.reduce(function(s,r){ return s+(r.ausentes||0); },0);
+    var totalTard     = reportes.reduce(function(s,r){ return s+(r.tardanzas||0); },0);
+    var hoy = new Date().toISOString().split('T')[0];
+    var hoyR = reportes.filter(function(r){ return r.fecha===hoy; }).length;
+    kpiEl.innerHTML = [
+      {icon:'📋',val:totalReportes, label:'Reportes totales',  c:'#0f4c75', bg:'#e0f2fe'},
+      {icon:'📅',val:hoyR,          label:'Hoy',               c:'#7c3aed', bg:'#ede9fe'},
+      {icon:'❌',val:totalAusentes,  label:'Ausencias registradas', c:'#dc2626', bg:'#fee2e2'},
+      {icon:'⏰',val:totalTard,      label:'Tardanzas',         c:'#d97706', bg:'#fef3c7'},
+    ].map(function(k){
+      return '<div style="background:'+k.bg+';border-radius:10px;padding:12px;text-align:center;">'
+        +'<div style="font-size:18px;">'+k.icon+'</div>'
+        +'<div style="font-size:20px;font-weight:900;color:'+k.c+';">'+k.val+'</div>'
+        +'<div style="font-size:11px;color:#666;">'+k.label+'</div></div>';
+    }).join('');
+  }
+
+  if(!reportes.length){
+    el.innerHTML='<p style="color:#888;padding:20px;text-align:center;">No hay reportes aún. Los maestros los envían desde su portal.</p>';
+    return;
+  }
+
+  el.innerHTML = '<div style="display:grid;gap:12px;">'+reportes.map(function(r){
+    var ausentesNombres = (r.detalleAusentes||[]).map(function(a){ return a.nombre+(a.obs?' ('+a.obs+')':''); }).join(', ');
+    var tardNombres     = (r.detalleTardanzas||[]).map(function(a){ return a.nombre+(a.obs?' ('+a.obs+')':''); }).join(', ');
+    var pct = r.totalEstudiantes>0 ? Math.round((r.presentes/r.totalEstudiantes)*100) : 0;
+    return '<div style="background:white;border-radius:14px;padding:18px;border:1px solid var(--border);border-left:4px solid var(--gold);">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px;">'
+        +'<div>'
+          +'<div style="font-weight:800;color:var(--navy);font-size:15px;">'+r.grado+'</div>'
+          +'<div style="font-size:12px;color:#888;">📅 '+r.fecha+' · 🕐 '+r.hora+' · 👨‍🏫 '+r.reportadoPor+'</div>'
+        +'</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
+          +'<span style="background:#dcfce7;color:#16a34a;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;">✅ '+r.presentes+' presentes</span>'
+          +(r.ausentes?'<span style="background:#fee2e2;color:#dc2626;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;">❌ '+r.ausentes+' ausentes</span>':'')
+          +(r.tardanzas?'<span style="background:#fef3c7;color:#d97706;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;">⏰ '+r.tardanzas+' tardanzas</span>':'')
+        +'</div>'
+      +'</div>'
+      +'<div style="height:6px;background:#f0f0f0;border-radius:3px;margin-bottom:12px;">'
+        +'<div style="height:100%;width:'+pct+'%;background:#16a34a;border-radius:3px;transition:width .6s;"></div>'
+      +'</div>'
+      +(ausentesNombres?'<div style="background:#fff5f5;border-radius:8px;padding:10px 14px;margin-bottom:6px;">'
+        +'<b style="color:#dc2626;font-size:12px;">❌ Ausentes ('+r.ausentes+'):</b>'
+        +'<p style="color:#dc2626;font-size:12px;margin:4px 0 0;line-height:1.6;">'+ausentesNombres+'</p>'
+        +'</div>':'')
+      +(tardNombres?'<div style="background:#fffbeb;border-radius:8px;padding:10px 14px;">'
+        +'<b style="color:#d97706;font-size:12px;">⏰ Tardanzas ('+r.tardanzas+'):</b>'
+        +'<p style="color:#d97706;font-size:12px;margin:4px 0 0;line-height:1.6;">'+tardNombres+'</p>'
+        +'</div>':'')
+      +'</div>';
+  }).join('')+'</div>';
+}
+
+function exportAsistenciaCSV(){
+  var rows=[['Fecha','Grado','Total','Presentes','Ausentes','Tardanzas','Nombres Ausentes','Enviado por']];
+  (APP.reportesAsistencia||[]).forEach(function(r){
+    var aus=(r.detalleAusentes||[]).map(function(a){return a.nombre;}).join(' | ');
+    rows.push([r.fecha,r.grado,r.totalEstudiantes,r.presentes,r.ausentes,r.tardanzas,aus,r.reportadoPor]);
+  });
+  var csv=rows.map(function(r){return r.map(function(c){return '"'+(c||'')+'"';}).join(',');}).join('\n');
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='asistencia_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+}
+
+// ================================================================
+//  📅 SISTEMA DE ASISTENCIA — Presente / Tarde / Ausente
+// ================================================================
+if(!APP.asistencia) APP.asistencia = [];
+if(PERSIST_KEYS.indexOf('asistencia')===-1) PERSIST_KEYS.push('asistencia');
+
+// Registrar asistencia de un estudiante
+function registrarAsistencia(studentId, tipo, nota){
+  // tipo: 'presente' | 'tarde' | 'ausente'
+  var fecha = new Date().toISOString().split('T')[0];
+  var hora  = new Date().toLocaleTimeString('es-DO',{hour:'2-digit',minute:'2-digit'});
+  var existing = APP.asistencia.find(function(a){
+    return a.studentId===studentId && a.fecha===fecha;
+  });
+  if(existing){
+    existing.tipo = tipo;
+    existing.nota = nota||'';
+    existing.hora = hora;
+    existing.by   = APP.currentUser ? APP.currentUser.name : 'Sistema';
+  } else {
+    APP.asistencia.push({
+      id: 'A-'+Date.now()+'-'+studentId,
+      studentId: studentId,
+      fecha: fecha,
+      hora: hora,
+      tipo: tipo,
+      nota: nota||'',
+      by: APP.currentUser ? APP.currentUser.name : 'Sistema'
+    });
+  }
+  persistSave();
+  // Notificar al padre si es ausente o tarde
+  var st = (APP.students||[]).find(function(s){ return s.id===studentId; });
+  if(st && (tipo==='ausente'||tipo==='tarde')){
+    var msg = tipo==='ausente'
+      ? '⚠️ Su hijo/a '+st.nombre+' '+st.apellido+' no asistió hoy ('+fecha+')'
+      : '⏰ Su hijo/a '+st.nombre+' '+st.apellido+' llegó tarde hoy ('+hora+')';
+    addNotifToUser(st.emailPadre||'', msg);
+  }
+}
+
+// Tomar asistencia de toda una clase/lista
+function tomarAsistenciaClase(){
+  var fecha = new Date().toISOString().split('T')[0];
+  var grado = (document.getElementById('asist-grado')||{}).value||'';
+  var estudiantes = grado
+    ? (APP.students||[]).filter(function(s){ return s.grado===grado; })
+    : (APP.students||[]);
+  if(!estudiantes.length){ toast('No hay estudiantes','error'); return; }
+
+  var container = document.getElementById('asist-lista-container');
+  if(!container) return;
+
+  container.innerHTML = '<div style="overflow-x:auto;">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+    + '<thead><tr style="background:var(--navy);color:white;">'
+    + '<th style="padding:10px 14px;text-align:left;">Estudiante</th>'
+    + '<th style="padding:10px 14px;text-align:left;">Grado</th>'
+    + '<th style="padding:10px 14px;text-align:center;color:#4ade80;">✅ Presente</th>'
+    + '<th style="padding:10px 14px;text-align:center;color:#fbbf24;">⏰ Tarde</th>'
+    + '<th style="padding:10px 14px;text-align:center;color:#f87171;">❌ Ausente</th>'
+    + '<th style="padding:10px 14px;text-align:left;">Nota</th>'
+    + '</tr></thead><tbody>'
+    + estudiantes.map(function(st, i){
+        var hoy = APP.asistencia.find(function(a){ return a.studentId===st.id && a.fecha===fecha; });
+        var tipo = hoy ? hoy.tipo : 'presente';
+        return '<tr style="border-bottom:1px solid var(--border);" id="asist-row-'+st.id+'">'
+          + '<td style="padding:9px 14px;font-weight:600;">'+st.nombre+' '+st.apellido+'</td>'
+          + '<td style="padding:9px 14px;color:#888;">'+st.grado+'</td>'
+          + '<td style="padding:9px 14px;text-align:center;">'
+          + '<input type="radio" name="asist-'+st.id+'" value="presente" '+(tipo==='presente'?'checked':'')+' style="width:18px;height:18px;accent-color:#16a34a;cursor:pointer;"></td>'
+          + '<td style="padding:9px 14px;text-align:center;">'
+          + '<input type="radio" name="asist-'+st.id+'" value="tarde" '+(tipo==='tarde'?'checked':'')+' style="width:18px;height:18px;accent-color:#d97706;cursor:pointer;"></td>'
+          + '<td style="padding:9px 14px;text-align:center;">'
+          + '<input type="radio" name="asist-'+st.id+'" value="ausente" '+(tipo==='ausente'?'checked':'')+' style="width:18px;height:18px;accent-color:#dc2626;cursor:pointer;"></td>'
+          + '<td style="padding:9px 14px;">'
+          + '<input type="text" id="nota-'+st.id+'" value="'+(hoy?hoy.nota:'')+'" placeholder="Observación..." '
+          + 'style="width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;"></td>'
+          + '</tr>';
+      }).join('')
+    + '</tbody></table></div>'
+    + '<div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">'
+    + '<button class="btn btn-gold" style="padding:10px 24px;" onclick="guardarAsistenciaClase()">💾 Guardar Asistencia del Día</button>'
+    + '<button class="btn btn-outline" style="font-size:12px;" onclick="marcarTodosPresente()">✅ Marcar todos Presente</button>'
+    + '</div>';
+  document.getElementById('asist-lista-container').scrollIntoView({behavior:'smooth'});
+}
+
+function marcarTodosPresente(grado){
+  if(grado===undefined){ var el=document.getElementById('asist-grado'); grado=el?el.value:''; }
+  var estudiantes = grado
+    ? (APP.students||[]).filter(function(s){ return s.grado===grado; })
+    : (APP.students||[]);
+  estudiantes.forEach(function(st){
+    var radio = document.querySelector('input[name="asist-'+st.id+'"][value="presente"]');
+    if(radio) radio.checked = true;
+  });
+}
+
+function guardarAsistenciaClase(grado){
+  if(grado===undefined){ var el=document.getElementById('asist-grado'); grado=el?el.value:''; }
+  var fecha = new Date().toISOString().split('T')[0];
+  var estudiantes = grado
+    ? (APP.students||[]).filter(function(s){ return s.grado===grado; })
+    : (APP.students||[]);
+  var presentes=0, tardes=0, ausentes=0;
+  estudiantes.forEach(function(st){
+    var radios = document.querySelectorAll('input[name="asist-'+st.id+'"]');
+    var tipo = 'presente';
+    radios.forEach(function(r){ if(r.checked) tipo=r.value; });
+    var nota = (document.getElementById('nota-'+st.id)||{}).value||'';
+    registrarAsistencia(st.id, tipo, nota);
+    if(tipo==='presente') presentes++;
+    else if(tipo==='tarde') tardes++;
+    else ausentes++;
+  });
+  toast('✅ Asistencia guardada — '+presentes+' presentes, '+tardes+' tarde(s), '+ausentes+' ausente(s)','success');
+  renderResumenAsistencia(grado);
+}
+
+function renderResumenAsistencia(grado){
+  var el = document.getElementById('asist-resumen');
+  if(!el) return;
+  var fecha = new Date().toISOString().split('T')[0];
+  var estudiantes = grado
+    ? (APP.students||[]).filter(function(s){ return s.grado===grado; })
+    : (APP.students||[]);
+  var hoy = APP.asistencia.filter(function(a){ return a.fecha===fecha; });
+  var p = hoy.filter(function(a){ return a.tipo==='presente'; }).length;
+  var t = hoy.filter(function(a){ return a.tipo==='tarde'; }).length;
+  var aus = hoy.filter(function(a){ return a.tipo==='ausente'; }).length;
+  el.innerHTML = '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
+    + '<div style="background:#dcfce7;border-radius:10px;padding:12px 18px;text-align:center;">'
+    + '<div style="font-size:22px;font-weight:900;color:#16a34a;">'+p+'</div><div style="font-size:11px;color:#166534;">✅ Presentes</div></div>'
+    + '<div style="background:#fef3c7;border-radius:10px;padding:12px 18px;text-align:center;">'
+    + '<div style="font-size:22px;font-weight:900;color:#d97706;">'+t+'</div><div style="font-size:11px;color:#92400e;">⏰ Tardanzas</div></div>'
+    + '<div style="background:#fee2e2;border-radius:10px;padding:12px 18px;text-align:center;">'
+    + '<div style="font-size:22px;font-weight:900;color:#dc2626;">'+aus+'</div><div style="font-size:11px;color:#991b1b;">❌ Ausentes</div></div>'
+    + '<div style="background:#e0f2fe;border-radius:10px;padding:12px 18px;text-align:center;">'
+    + '<div style="font-size:22px;font-weight:900;color:#0284c7;">'+(p+t+aus>0?Math.round((p+t)/(p+t+aus)*100):0)+'%</div><div style="font-size:11px;color:#075985;">📊 Asistencia</div></div>'
+    + '</div>';
+}
+
+function getHistorialAsistencia(studentId){
+  return (APP.asistencia||[])
+    .filter(function(a){ return a.studentId===studentId; })
+    .sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+}
