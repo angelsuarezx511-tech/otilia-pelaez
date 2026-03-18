@@ -2078,34 +2078,64 @@ function restoreProfilePhotos(){
     if(!APP.currentUser) return;
     var email = APP.currentUser.email;
     if(!email) return;
-    var src = getPhotoForEmail(email);
-    if(src){
-      var roleMap={admin:'admin',profesor:'prof',estudiante:'est',padre:'padre',enfermeria:'enfer'};
-      var role = roleMap[APP.currentUser.role] || APP.currentUser.role;
-      applyPhotoToUI(role, src);
+    var roleMap={admin:'admin',profesor:'prof',estudiante:'est',padre:'padre',enfermeria:'enfer'};
+    var role = roleMap[APP.currentUser.role] || APP.currentUser.role;
+    // 1. Aplicar desde localStorage de inmediato (rápido)
+    var localSrc = getPhotoForEmail(email);
+    if(localSrc) applyPhotoToUI(role, localSrc);
+    // 2. Buscar en Firebase (más actualizado, de otro dispositivo)
+    if(_firebaseReady && _db){
+      _db.collection('otilia_fotos').doc(email.replace(/[@.]/g,'_')).get()
+        .then(function(doc){
+          if(doc.exists && doc.data().foto){
+            var cloudSrc = doc.data().foto;
+            // Si la de la nube es diferente, actualizamos
+            if(cloudSrc !== localSrc){
+              savePhotoForEmail(email, cloudSrc);
+              applyPhotoToUI(role, cloudSrc);
+            }
+          }
+        }).catch(function(){});
     }
   }catch(e){}
 }
 
-// Cambiar foto de perfil
+// Cambiar foto de perfil — guardado en Firebase + localStorage
 function changeProfilePhoto(event, role){
   var file = event.target.files[0];
   if(!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e){
-    var src = e.target.result;
-    // Guardar ligado al correo del usuario actual
-    if(APP.currentUser && APP.currentUser.email){
-      savePhotoForEmail(APP.currentUser.email, src);
+  // Comprimir imagen antes de guardar (max 200px, calidad 0.7)
+  var img = new Image();
+  var url = URL.createObjectURL(file);
+  img.onload = function(){
+    var canvas = document.createElement('canvas');
+    var MAX = 200;
+    var ratio = Math.min(MAX/img.width, MAX/img.height);
+    canvas.width  = Math.round(img.width  * ratio);
+    canvas.height = Math.round(img.height * ratio);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    var src = canvas.toDataURL('image/jpeg', 0.75);
+    URL.revokeObjectURL(url);
+    var email = APP.currentUser && APP.currentUser.email;
+    if(!email){ toast('No hay sesión activa','error'); return; }
+    // 1. localStorage (instantáneo, offline)
+    savePhotoForEmail(email, src);
+    // 2. Firebase (nube, todos los dispositivos)
+    if(_firebaseReady && _db){
+      _db.collection('otilia_fotos').doc(email.replace(/[@.]/g,'_')).set({
+        email: email, foto: src, updatedAt: Date.now()
+      }).then(function(){
+        toast('✅ Foto guardada en la nube — disponible en todos tus dispositivos','success');
+      }).catch(function(){ toast('Foto guardada localmente','info'); });
+    } else {
+      toast('✅ Foto guardada','success');
     }
-    // También guardar por rol por compatibilidad
+    // 3. APP data
     if(!APP.profilePhotos) APP.profilePhotos = {};
-    APP.profilePhotos[APP.currentUser ? APP.currentUser.email : role] = src;
-    persistSave();
+    APP.profilePhotos[email] = src;
     applyPhotoToUI(role, src);
-    toast('✅ Foto guardada — se mantendrá aunque cierres sesión','success');
   };
-  reader.readAsDataURL(file);
+  img.src = url;
 }
 
 // Compat — no usado pero evita errores si algo lo llama
