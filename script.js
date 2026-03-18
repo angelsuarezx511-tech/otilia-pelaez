@@ -1,17 +1,4 @@
 // ── Seguridad de login ─────────────────────────────────────────────
-
-// resetActivityTimer — definida al inicio para evitar errores
-var _activityTimeout = null;
-function resetActivityTimer() {
-    if (_activityTimeout) clearTimeout(_activityTimeout);
-    _activityTimeout = setTimeout(function() {
-        if (APP && APP.currentUser) {
-            if (typeof toast === 'function') toast('Sesión cerrada por inactividad', 'info');
-            if (typeof logout === 'function') logout();
-        }
-    }, 7200000);
-}
-
 var _loginAttempts = {};
 var _MAX_ATTEMPTS  = 5;
 var _LOCKOUT_MS    = 10 * 60 * 1000;
@@ -624,32 +611,19 @@ function buildNavbar(role){
         <button class="nav-btn" onclick="showPage('anuncios')">📢 Anuncios</button>
       </div>`;
   }
-  // Inyectar onclick directamente en el HTML generado
-  nl.innerHTML = html.replace(
-    /class="nav-btn dropdown-trigger"/g,
-    'class="nav-btn dropdown-trigger" onclick="toggleDropdown(this,event)"'
-  );
-}
-
-function toggleDropdown(btn, e) {
-  e.stopPropagation();
-  var menu = btn.nextElementSibling;
-  if (!menu || !menu.classList.contains('dropdown-menu')) return;
-  var isOpen = menu.classList.contains('open');
-  // Cerrar todos
-  document.querySelectorAll('.dropdown-menu.open').forEach(function(m){ m.classList.remove('open'); });
-  // Abrir si estaba cerrado
-  if (!isOpen) menu.classList.add('open');
-}
-
-// Cerrar dropdowns al click fuera — solo una vez
-if (!window._ddClose) {
-  window._ddClose = true;
-  document.addEventListener('click', function(e) {
-    if (!e.target.closest || !e.target.closest('.nav-dropdown')) {
-      document.querySelectorAll('.dropdown-menu.open').forEach(function(m){ m.classList.remove('open'); });
-    }
+  nl.innerHTML=html;
+  // Re-attach dropdown events
+  document.querySelectorAll('.dropdown-trigger').forEach(btn=>{
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      const menu=this.nextElementSibling;
+      document.querySelectorAll('.dropdown-menu.open').forEach(m=>{if(m!==menu)m.classList.remove('open');});
+      menu.classList.toggle('open');
+    });
   });
+  document.addEventListener('click',()=>{
+    document.querySelectorAll('.dropdown-menu.open').forEach(m=>m.classList.remove('open'));
+  },{once:false});
 }
 
 function showAdminSection(id){
@@ -692,6 +666,8 @@ function showPage(id){
   if(id==='pagos-public')      { renderPagosPublic(); switchPagosTab('tab-tarifas'); }
   if(id==='reglamento-public') renderReglamentoPublic();
   if(id==='anuncios')          setTimeout(renderAnunciosPublic, 50);
+  if(id==='blog')            setTimeout(renderBlogPublic, 50);
+  if(id==='egresados')       setTimeout(renderEgresadosPublic, 50);
   // Restaurar bot FAB y portal FAB al navegar entre páginas
   if(APP.currentUser){
     var role=APP.currentUser.role;
@@ -1134,7 +1110,7 @@ function showPadreSection(id){
   const sec=document.getElementById(id);if(sec)sec.classList.add('active');
 }
 
-function renderAdminData(){renderAnnouncements();renderStudentTable();renderNotasTable();renderAusencias();renderInscripciones();renderReportes();renderMensajes();renderCustomSections();updateCounters();}
+function renderAdminData(){renderAnnouncements();renderStudentTable();renderNotasTable();renderAusencias();renderInscripciones();renderReportes();renderMensajes();renderCustomSections();updateCounters();setTimeout(renderDashboardGraficas,300);}
 function renderProfesorData(){populateStudentSelect();renderNotasTable();renderAusencias();renderProfeRecords();renderMensajes();}
 
 // ===== TABS =====
@@ -6482,127 +6458,1142 @@ function renderAnunciosPublic(){
       +'</div></div></div>';
   }).join('');
 }
-/* ================================================================
-   OTILIA PELÁEZ — Funciones nuevas (sin tocar nada original)
-================================================================ */
 
-// ── Hamburguesa ──
-function toggleMobileMenu(){var m=document.getElementById('mobile-menu'),h=document.getElementById('nav-hamburger');if(!m||!h)return;if(m.classList.contains('open')){closeMobileMenu();}else{m.classList.add('open');h.classList.add('open');document.body.style.overflow='hidden';}}
-function closeMobileMenu(){var m=document.getElementById('mobile-menu'),h=document.getElementById('nav-hamburger');if(m)m.classList.remove('open');if(h)h.classList.remove('open');document.body.style.overflow='';}
 
-// ── FAQ ──
-function toggleFaq(el){el.classList.toggle('open');}
+// ================================================================
+//  📰 BLOG / NOTICIAS
+// ================================================================
+if(!APP.blog) APP.blog = [];
+if(PERSIST_KEYS.indexOf('blog')===-1) PERSIST_KEYS.push('blog');
 
-// ── Backdrop dropdowns ──
-(function(){var bd=document.createElement('div');bd.id='dropdown-backdrop';bd.onclick=function(){document.querySelectorAll('.dropdown-menu.open').forEach(function(m){m.classList.remove('open');});bd.classList.remove('show');};document.body.appendChild(bd);})();
-
-// Mejorar dropdowns con backdrop
-// buildNavbar original — sin modificaciones (dropdowns funcionan correctamente)
-// click listener para dropdowns removido — el original ya lo maneja
-
-// ── Fix botón Entrar maestros ──
-document.addEventListener('DOMContentLoaded',function(){
-    var btn=document.getElementById('prof-modal-btn');
-    if(btn){btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();doProfesorLogin();});}
-    // Centrar botones login
-    document.querySelectorAll('#login-form-wrap .btn,#register-form-wrap .btn').forEach(function(b){
-        b.style.cssText+='display:flex!important;width:100%!important;justify-content:center!important;align-items:center!important;text-align:center!important;box-sizing:border-box!important;';
-    });
-});
-
-// ── Funciones faltantes ──
-function showCatRole(role,btn){
-    document.querySelectorAll('.cat-role-pane').forEach(function(p){p.style.display='none';});
-    var el=document.getElementById('cat-role-'+role);if(el)el.style.display='block';
-    document.querySelectorAll('.cat-role-tab').forEach(function(b){b.style.background='white';b.style.color='#888';b.style.borderColor='var(--border)';});
-    if(btn){btn.style.background='var(--gold)';btn.style.color='var(--navy)';btn.style.borderColor='var(--gold)';}
-}
-function addCategoria(){
-    var n=prompt('Nombre de la categoría:');if(!n||!n.trim())return;
-    var i=prompt('Ícono (emoji):','📁')||'📁';
-    if(!APP.categoriasConfig)APP.categoriasConfig={sitio:[],estudiante:[],padre:[],profe:[]};
-    APP.categoriasConfig.sitio.push({id:'cc-'+Date.now(),nombre:n.trim(),icono:i,activa:true,custom:true,fields:[]});
-    persistSave();if(typeof initCategoriasAdmin==='function')initCategoriasAdmin();
-    toast('✅ Categoría "'+n.trim()+'" agregada','success');
+function saveBlog(){
+  var titulo    = (document.getElementById('blog-titulo')    ||{}).value.trim();
+  var resumen   = (document.getElementById('blog-resumen')   ||{}).value.trim();
+  var contenido = (document.getElementById('blog-contenido') ||{}).value.trim();
+  var categoria = (document.getElementById('blog-categoria') ||{}).value||'Noticia';
+  var autor     = (document.getElementById('blog-autor')     ||{}).value.trim()||'Dirección';
+  var imagen    = (document.getElementById('blog-imagen')    ||{}).value.trim();
+  var destacado = (document.getElementById('blog-destacado') ||{}).checked;
+  var editId    = (document.getElementById('blog-edit-id')   ||{}).value;
+  if(!titulo||!resumen){toast('Título y resumen son obligatorios','error');return;}
+  var item = {
+    id: editId || 'B-'+Date.now(),
+    titulo, resumen, contenido, categoria, autor, imagen, destacado,
+    fecha: new Date().toLocaleDateString('es-DO'),
+    fechaISO: new Date().toISOString().split('T')[0]
+  };
+  if(editId){
+    var idx = APP.blog.findIndex(function(b){return b.id===editId;});
+    if(idx>-1) APP.blog[idx] = item; else APP.blog.unshift(item);
+  } else {
+    APP.blog.unshift(item);
+  }
+  persistSave();
+  closeModal('modal-blog');
+  ['blog-titulo','blog-resumen','blog-contenido','blog-autor','blog-imagen'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('blog-edit-id').value='';
+  document.getElementById('blog-destacado').checked=false;
+  renderBlogAdmin();
+  toast('✅ Publicación guardada','success');
 }
 
-// ── Datos nuevas secciones ──
-if(!APP.noticias)APP.noticias=[];
-if(!APP.comunicados)APP.comunicados=[];
-if(!APP.faqExtra)APP.faqExtra=[];
-if(!APP.docentesDestacados)APP.docentesDestacados=[];
-
-function renderNoticiasPublicas(){var g=document.getElementById('noticias-publicas-grid');if(!g)return;var n=APP.noticias||[];if(!n.length){g.innerHTML='<div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:40px;margin-bottom:10px;">📰</div><p>No hay noticias aún.</p></div>';return;}g.innerHTML=n.map(function(x){return '<div class="noticia-card"><div class="noticia-img">'+(x.emoji||'📰')+'</div><div class="noticia-body"><div class="noticia-fecha">'+(x.fecha||'')+'</div><h4>'+(x.titulo||'')+'</h4><p>'+(x.resumen||'')+'</p></div></div>';}).join('');}
-function renderDocentesDestacados(){var g=document.getElementById('docentes-destacados-grid');if(!g)return;var d=APP.docentesDestacados||[];if(!d.length){g.innerHTML='<div style="text-align:center;padding:40px;color:#bbb;grid-column:1/-1;"><div style="font-size:40px;margin-bottom:10px;">👨‍🏫</div><p>El admin puede agregar docentes.</p></div>';return;}g.innerHTML=d.map(function(x){return '<div class="docente-card"><div class="docente-avatar">'+(x.emoji||'👨‍🏫')+'</div><div class="docente-nombre">'+(x.nombre||'')+'</div><div class="docente-materia">'+(x.materia||'')+'</div><div class="docente-grado">'+(x.grado||'')+'</div></div>';}).join('');}
-function renderComunicadosPublicos(){var l=document.getElementById('comunicados-publicos-list');if(!l)return;var c=APP.comunicados||[];if(!c.length){l.innerHTML='<div style="text-align:center;padding:40px;color:#bbb;"><div style="font-size:40px;margin-bottom:10px;">📋</div><p>No hay comunicados aún.</p></div>';return;}l.innerHTML=c.map(function(x){return '<div class="comunicado-card"><div class="comunicado-icon">'+(x.emoji||'📋')+'</div><div class="comunicado-body"><h4>'+(x.titulo||'')+'</h4><p>'+(x.texto||'')+'</p><div class="comunicado-fecha">'+(x.fecha||'')+'</div></div></div>';}).join('');}
-function renderFaqExtra(){var el=document.getElementById('faq-extra-list');if(!el)return;el.innerHTML=(APP.faqExtra||[]).map(function(x){return '<div class="faq-item" onclick="toggleFaq(this)"><div class="faq-pregunta">'+(x.pregunta||'')+' <span class="faq-arrow">▼</span></div><div class="faq-respuesta">'+(x.respuesta||'')+'</div></div>';}).join('');}
-setTimeout(function(){renderNoticiasPublicas();renderDocentesDestacados();renderComunicadosPublicos();renderFaqExtra();},1000);
-
-// ── Panel admin contenido ──
-var _esI='width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;';
-var _esL='display:block;font-size:11px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase;';
-function _oG(t,b){var ti=document.getElementById('modal-generico-title');if(ti)ti.textContent=t;var bi=document.getElementById('modal-generico-body');if(bi)bi.innerHTML=b;openModal('modal-generico');}
-function _rL(id,arr,fn){var el=document.getElementById(id);if(!el)return;el.innerHTML=arr.length?arr.map(fn).join(''):'<p style="color:#bbb;text-align:center;font-size:13px;padding:8px;">No hay elementos.</p>';}
-function _delBtn(fn,i){return '<button onclick="'+fn+'('+i+')" style="background:#fee2e2;border:none;border-radius:6px;padding:4px 9px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;flex-shrink:0;">🗑️</button>';}
-
-function openAdminNoticias(){
-    _oG('📰 Noticias','<div id="noticias-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;min-height:20px;"></div><div style="background:#f8fafc;border-radius:12px;padding:14px;border:1.5px dashed #ddd;"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#0f1c3a;">➕ Agregar</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;"><div><label style="'+_esL+'">Ícono</label><input type="text" id="not-emoji" placeholder="📰" maxlength="4" style="'+_esI+'"></div><div><label style="'+_esL+'">Fecha</label><input type="date" id="not-fecha" style="'+_esI+'"></div></div><div style="margin-bottom:10px;"><label style="'+_esL+'">Título *</label><input type="text" id="not-titulo" placeholder="Título..." style="'+_esI+'"></div><div style="margin-bottom:12px;"><label style="'+_esL+'">Resumen</label><textarea id="not-resumen" rows="2" style="'+_esI+'resize:none;" placeholder="Descripción..."></textarea></div><button class="btn btn-gold" onclick="saveNoticia()" style="width:100%;">💾 Guardar</button></div>');
-    _rL('noticias-admin-list',APP.noticias||[],function(x,i){return '<div style="background:white;border-radius:8px;padding:9px 13px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;"><div><span style="font-size:16px;margin-right:6px;">'+(x.emoji||'📰')+'</span><strong style="font-size:13px;">'+(x.titulo||'')+'</strong><span style="color:#bbb;font-size:11px;margin-left:5px;">'+(x.fecha||'')+'</span></div>'+_delBtn('deleteNoticia',i)+'</div>';});
+function editBlog(id){
+  var b = APP.blog.find(function(b){return b.id===id;});
+  if(!b) return;
+  document.getElementById('blog-edit-id').value  = b.id;
+  document.getElementById('blog-titulo').value    = b.titulo;
+  document.getElementById('blog-resumen').value   = b.resumen;
+  document.getElementById('blog-contenido').value = b.contenido||'';
+  document.getElementById('blog-categoria').value = b.categoria||'Noticia';
+  document.getElementById('blog-autor').value     = b.autor||'';
+  document.getElementById('blog-imagen').value    = b.imagen||'';
+  document.getElementById('blog-destacado').checked = !!b.destacado;
+  openModal('modal-blog');
 }
-function saveNoticia(){var t=(document.getElementById('not-titulo')||{}).value.trim();if(!t){toast('Título obligatorio','error');return;}if(!APP.noticias)APP.noticias=[];var f=(document.getElementById('not-fecha')||{}).value;APP.noticias.unshift({titulo:t,resumen:(document.getElementById('not-resumen')||{}).value.trim(),emoji:(document.getElementById('not-emoji')||{}).value.trim()||'📰',fecha:f?new Date(f+'T12:00').toLocaleDateString('es-DO'):''});persistSave();openAdminNoticias();renderNoticiasPublicas();toast('✅ Noticia publicada','success');}
-function deleteNoticia(i){if(!confirm('¿Eliminar?'))return;(APP.noticias||[]).splice(i,1);persistSave();openAdminNoticias();renderNoticiasPublicas();toast('Eliminada','info');}
 
-function openAdminDocentes(){
-    _oG('👨‍🏫 Docentes','<div id="docentes-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;min-height:20px;"></div><div style="background:#f8fafc;border-radius:12px;padding:14px;border:1.5px dashed #ddd;"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#0f1c3a;">➕ Agregar</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;"><div><label style="'+_esL+'">Ícono</label><input type="text" id="doc-emoji" placeholder="👨‍🏫" maxlength="4" style="'+_esI+'"></div><div><label style="'+_esL+'">Nombre *</label><input type="text" id="doc-nombre" placeholder="Prof. Juan" style="'+_esI+'"></div><div><label style="'+_esL+'">Materia *</label><input type="text" id="doc-materia" placeholder="Matemáticas" style="'+_esI+'"></div><div><label style="'+_esL+'">Nivel</label><input type="text" id="doc-grado" placeholder="Secundaria" style="'+_esI+'"></div></div><button class="btn btn-gold" onclick="saveDocente()" style="width:100%;margin-top:4px;">💾 Guardar</button></div>');
-    _rL('docentes-admin-list',APP.docentesDestacados||[],function(x,i){return '<div style="background:white;border-radius:8px;padding:9px 13px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;"><div><span style="font-size:16px;margin-right:6px;">'+(x.emoji||'👨‍🏫')+'</span><strong style="font-size:13px;">'+(x.nombre||'')+'</strong> · <span style="color:#b8963e;font-size:12px;">'+(x.materia||'')+'</span></div>'+_delBtn('deleteDocente',i)+'</div>';});
+function deleteBlog(id){
+  if(!confirm('¿Eliminar esta publicación?')) return;
+  APP.blog = APP.blog.filter(function(b){return b.id!==id;});
+  persistSave(); renderBlogAdmin(); toast('Publicación eliminada','info');
 }
-function saveDocente(){var n=(document.getElementById('doc-nombre')||{}).value.trim(),m=(document.getElementById('doc-materia')||{}).value.trim();if(!n||!m){toast('Nombre y materia obligatorios','error');return;}if(!APP.docentesDestacados)APP.docentesDestacados=[];APP.docentesDestacados.push({nombre:n,materia:m,emoji:(document.getElementById('doc-emoji')||{}).value.trim()||'👨‍🏫',grado:(document.getElementById('doc-grado')||{}).value.trim()});persistSave();openAdminDocentes();renderDocentesDestacados();toast('✅ Docente agregado','success');}
-function deleteDocente(i){if(!confirm('¿Eliminar?'))return;(APP.docentesDestacados||[]).splice(i,1);persistSave();openAdminDocentes();renderDocentesDestacados();toast('Eliminado','info');}
 
-function openAdminComunicados(){
-    _oG('📋 Comunicados','<div id="comunicados-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;min-height:20px;"></div><div style="background:#f8fafc;border-radius:12px;padding:14px;border:1.5px dashed #ddd;"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#0f1c3a;">➕ Nuevo</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;"><div><label style="'+_esL+'">Ícono</label><input type="text" id="com-emoji" placeholder="📋" maxlength="4" style="'+_esI+'"></div><div><label style="'+_esL+'">Fecha</label><input type="date" id="com-fecha" style="'+_esI+'"></div></div><div style="margin-bottom:10px;"><label style="'+_esL+'">Título *</label><input type="text" id="com-titulo" placeholder="Asunto..." style="'+_esI+'"></div><div style="margin-bottom:12px;"><label style="'+_esL+'">Contenido *</label><textarea id="com-texto" rows="3" style="'+_esI+'resize:none;" placeholder="Texto..."></textarea></div><button class="btn btn-gold" onclick="saveComunicado()" style="width:100%;">💾 Publicar</button></div>');
-    _rL('comunicados-admin-list',APP.comunicados||[],function(x,i){return '<div style="background:white;border-radius:8px;padding:9px 13px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;"><div><span style="font-size:16px;margin-right:6px;">'+(x.emoji||'📋')+'</span><strong style="font-size:13px;">'+(x.titulo||'')+'</strong><span style="color:#bbb;font-size:11px;margin-left:5px;">'+(x.fecha||'')+'</span></div>'+_delBtn('deleteComunicado',i)+'</div>';});
+function renderBlogAdmin(){
+  var el = document.getElementById('blog-admin-list');
+  if(!el) return;
+  if(!APP.blog.length){el.innerHTML='<p style="color:#888;padding:20px;text-align:center;">No hay publicaciones. Agrega una con el botón +.</p>';return;}
+  var catColors={Noticia:'#3b82f6',Logro:'#d4af37',Evento:'#8b5cf6',Académico:'#16a34a'};
+  el.innerHTML = '<div style="display:grid;gap:14px;">' +
+    APP.blog.map(function(b){
+      var col = catColors[b.categoria]||'#888';
+      return '<div style="background:white;border-radius:14px;padding:18px;border:1px solid var(--border);border-left:4px solid '+col+';display:flex;gap:16px;align-items:flex-start;">'
+        +(b.imagen?'<img src="'+b.imagen+'" style="width:80px;height:80px;border-radius:10px;object-fit:cover;flex-shrink:0;">':'<div style="width:80px;height:80px;border-radius:10px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">📰</div>')
+        +'<div style="flex:1;min-width:0;">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">'
+        +'<span style="background:'+col+';color:white;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;">'+b.categoria+'</span>'
+        +(b.destacado?'<span style="background:#fef3c7;color:#d4af37;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800;">⭐ Destacada</span>':'')
+        +'<span style="color:#888;font-size:11px;">'+b.fecha+'</span>'
+        +'</div>'
+        +'<h4 style="margin:0 0 4px;color:var(--navy);font-size:14px;">'+b.titulo+'</h4>'
+        +'<p style="margin:0 0 10px;color:#666;font-size:12px;line-height:1.5;">'+b.resumen+'</p>'
+        +'<div style="display:flex;gap:8px;">'
+        +'<button onclick="editBlog(\''+b.id+'\')" class="btn btn-outline" style="font-size:11px;padding:4px 12px;">✏️ Editar</button>'
+        +'<button onclick="deleteBlog(\''+b.id+'\')" style="background:#fee2e2;border:none;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:11px;color:#dc2626;font-weight:700;">🗑️</button>'
+        +'</div></div></div>';
+    }).join('') + '</div>';
 }
-function saveComunicado(){var t=(document.getElementById('com-titulo')||{}).value.trim(),x=(document.getElementById('com-texto')||{}).value.trim();if(!t||!x){toast('Título y contenido obligatorios','error');return;}if(!APP.comunicados)APP.comunicados=[];var f=(document.getElementById('com-fecha')||{}).value;APP.comunicados.unshift({titulo:t,texto:x,emoji:(document.getElementById('com-emoji')||{}).value.trim()||'📋',fecha:f?new Date(f+'T12:00').toLocaleDateString('es-DO'):''});persistSave();openAdminComunicados();renderComunicadosPublicos();toast('✅ Comunicado publicado','success');}
-function deleteComunicado(i){if(!confirm('¿Eliminar?'))return;(APP.comunicados||[]).splice(i,1);persistSave();openAdminComunicados();renderComunicadosPublicos();toast('Eliminado','info');}
 
-function openAdminFaq(){
-    _oG('❓ FAQ','<div id="faq-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;min-height:20px;"></div><div style="background:#f8fafc;border-radius:12px;padding:14px;border:1.5px dashed #ddd;"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#0f1c3a;">➕ Nueva Pregunta</h4><div style="margin-bottom:10px;"><label style="'+_esL+'">Pregunta *</label><input type="text" id="faq-p-in" placeholder="¿Cuándo son las inscripciones?" style="'+_esI+'"></div><div style="margin-bottom:12px;"><label style="'+_esL+'">Respuesta *</label><textarea id="faq-r-in" rows="3" style="'+_esI+'resize:none;" placeholder="Respuesta..."></textarea></div><button class="btn btn-gold" onclick="saveFaqItem()" style="width:100%;">💾 Agregar</button></div>');
-    _rL('faq-admin-list',APP.faqExtra||[],function(x,i){return '<div style="background:white;border-radius:8px;padding:9px 13px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:10px;"><div style="font-size:13px;color:#0f1c3a;font-weight:600;">❓ '+(x.pregunta||'')+'</div>'+_delBtn('deleteFaqItem',i)+'</div>';});
+function renderBlogPublic(){
+  var list  = document.getElementById('blog-public-list');
+  var empty = document.getElementById('blog-public-empty');
+  if(!list) return;
+  var filtro = (document.getElementById('blog-pub-filter')||{}).value||'';
+  var busq   = ((document.getElementById('blog-pub-search')||{}).value||'').toLowerCase();
+  var items  = (APP.blog||[])
+    .filter(function(b){ return (!filtro||b.categoria===filtro)&&(!busq||(b.titulo+' '+b.resumen).toLowerCase().includes(busq)); })
+    .sort(function(a,b){ return (b.destacado?1:0)-(a.destacado?1:0); });
+  if(!items.length){list.innerHTML='';if(empty)empty.style.display='block';return;}
+  if(empty) empty.style.display='none';
+  var catColors={Noticia:'#3b82f6',Logro:'#d4af37',Evento:'#8b5cf6',Académico:'#16a34a'};
+  list.innerHTML='<div style="display:grid;gap:20px;">'+items.map(function(b){
+    var col=catColors[b.categoria]||'#888';
+    return '<div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.07);display:flex;flex-direction:column;">'
+      +(b.imagen?'<img src="'+b.imagen+'" style="width:100%;height:200px;object-fit:cover;">':'<div style="width:100%;height:120px;background:linear-gradient(135deg,var(--navy),var(--blue));display:flex;align-items:center;justify-content:center;font-size:48px;">📰</div>')
+      +'<div style="padding:24px;">'
+      +'<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'
+      +'<span style="background:'+col+';color:white;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:800;">'+b.categoria+'</span>'
+      +(b.destacado?'<span style="background:#fef3c7;color:#d4af37;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;">⭐ Destacado</span>':'')
+      +'</div>'
+      +'<h3 style="margin:0 0 10px;color:var(--navy);font-size:20px;font-family:\'Playfair Display\',serif;">'+b.titulo+'</h3>'
+      +'<p style="margin:0 0 14px;color:#666;font-size:14px;line-height:1.7;">'+b.resumen+'</p>'
+      +(b.contenido?'<p style="margin:0 0 14px;color:#444;font-size:13px;line-height:1.8;border-top:1px solid #f0f0f0;padding-top:12px;">'+b.contenido+'</p>':'')
+      +'<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#888;margin-top:auto;">'
+      +'<span>✍️ '+b.autor+'</span><span>📅 '+b.fecha+'</span>'
+      +'</div></div></div>';
+  }).join('')+'</div>';
 }
-function saveFaqItem(){var p=(document.getElementById('faq-p-in')||{}).value.trim(),r=(document.getElementById('faq-r-in')||{}).value.trim();if(!p||!r){toast('Pregunta y respuesta obligatorias','error');return;}if(!APP.faqExtra)APP.faqExtra=[];APP.faqExtra.push({pregunta:p,respuesta:r});persistSave();openAdminFaq();renderFaqExtra();var ep=document.getElementById('faq-p-in');if(ep)ep.value='';var er=document.getElementById('faq-r-in');if(er)er.value='';toast('✅ Pregunta agregada','success');}
-function deleteFaqItem(i){if(!confirm('¿Eliminar?'))return;(APP.faqExtra||[]).splice(i,1);persistSave();openAdminFaq();renderFaqExtra();toast('Eliminada','info');}
 
+// ================================================================
+//  🎓 EGRESADOS
+// ================================================================
+if(!APP.egresados) APP.egresados = [];
+if(PERSIST_KEYS.indexOf('egresados')===-1) PERSIST_KEYS.push('egresados');
 
-// ══════════════════════════════════════════════
-//  FIX CRÍTICO — Funciones faltantes
-// ══════════════════════════════════════════════
+function saveEgresado(){
+  var nombre    = (document.getElementById('egresado-nombre')    ||{}).value.trim();
+  var apellido  = (document.getElementById('egresado-apellido')  ||{}).value.trim();
+  var año       = parseInt((document.getElementById('egresado-año')||{}).value)||new Date().getFullYear();
+  var carrera   = (document.getElementById('egresado-carrera')   ||{}).value||'General';
+  var logro     = (document.getElementById('egresado-logro')     ||{}).value.trim();
+  var foto      = (document.getElementById('egresado-foto')      ||{}).value.trim();
+  var destino   = (document.getElementById('egresado-destino')   ||{}).value.trim();
+  var destacado = (document.getElementById('egresado-destacado') ||{}).checked;
+  var editId    = (document.getElementById('egresado-edit-id')   ||{}).value;
+  if(!nombre||!apellido){toast('Nombre y apellido son obligatorios','error');return;}
+  var item = {id:editId||'E-'+Date.now(), nombre, apellido, año, carrera, logro, foto, destino, destacado};
+  if(editId){
+    var idx=APP.egresados.findIndex(function(e){return e.id===editId;});
+    if(idx>-1) APP.egresados[idx]=item; else APP.egresados.push(item);
+  } else {
+    APP.egresados.push(item);
+  }
+  persistSave(); closeModal('modal-egresado');
+  document.getElementById('egresado-edit-id').value='';
+  ['egresado-nombre','egresado-apellido','egresado-logro','egresado-foto','egresado-destino'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  renderEgresadosAdmin(); renderEgresadosPublic();
+  toast('✅ Egresado guardado','success');
+}
 
-// Reiniciar timer en actividad del usuario
-['click', 'keypress', 'scroll', 'touchstart'].forEach(function(ev) {
-    document.addEventListener(ev, function() {
-        if (APP.currentUser && typeof resetActivityTimer === 'function') {
-            resetActivityTimer();
-        }
-    }, { passive: true });
-});
+function editEgresado(id){
+  var e=APP.egresados.find(function(e){return e.id===id;});
+  if(!e) return;
+  document.getElementById('egresado-edit-id').value=e.id;
+  document.getElementById('egresado-nombre').value=e.nombre;
+  document.getElementById('egresado-apellido').value=e.apellido;
+  document.getElementById('egresado-año').value=e.año;
+  document.getElementById('egresado-carrera').value=e.carrera||'General';
+  document.getElementById('egresado-logro').value=e.logro||'';
+  document.getElementById('egresado-foto').value=e.foto||'';
+  document.getElementById('egresado-destino').value=e.destino||'';
+  document.getElementById('egresado-destacado').checked=!!e.destacado;
+  openModal('modal-egresado');
+}
 
+function deleteEgresado(id){
+  if(!confirm('¿Eliminar este egresado?')) return;
+  APP.egresados=APP.egresados.filter(function(e){return e.id!==id;});
+  persistSave(); renderEgresadosAdmin(); toast('Eliminado','info');
+}
 
-// ── FIX BARRA BLANCA — ocultar divs vacíos del home ──
-(function fixWhiteBar() {
-    function hideEmpty() {
-        ['home-role-section', 'home-role-panel'].forEach(function(id) {
-            var el = document.getElementById(id);
-            if (!el) return;
-            var isEmpty = !el.innerHTML.trim();
-            el.style.display = isEmpty ? 'none' : '';
-            el.style.margin = isEmpty ? '0' : '';
-            el.style.padding = isEmpty ? '0' : '';
-            el.style.height = isEmpty ? '0' : '';
-            el.style.overflow = isEmpty ? 'hidden' : '';
-        });
+function renderEgresadosAdmin(){
+  var el=document.getElementById('egresados-admin-grid');
+  if(!el) return;
+  // Populate year filter
+  var años=[...new Set((APP.egresados||[]).map(function(e){return e.año;}))].sort(function(a,b){return b-a;});
+  var filtAño=(document.getElementById('egresado-filter-año')||{});
+  if(filtAño && filtAño.options && filtAño.options.length<=1){
+    años.forEach(function(a){var o=document.createElement('option');o.value=a;o.textContent=a;filtAño.appendChild(o);});
+  }
+  var busq=((document.getElementById('egresado-search')||{}).value||'').toLowerCase();
+  var fAño=(document.getElementById('egresado-filter-año')||{}).value||'';
+  var fCar=(document.getElementById('egresado-filter-carrera')||{}).value||'';
+  var items=(APP.egresados||[]).filter(function(e){
+    return (!busq||(e.nombre+' '+e.apellido).toLowerCase().includes(busq))
+        && (!fAño||e.año==fAño)&&(!fCar||e.carrera===fCar);
+  }).sort(function(a,b){return b.año-a.año||(b.destacado?1:0)-(a.destacado?1:0);});
+  if(!items.length){el.innerHTML='<p style="color:#888;padding:20px;grid-column:1/-1;text-align:center;">No hay egresados. Agrega uno con el botón +.</p>';return;}
+  el.innerHTML=items.map(function(e){
+    return '<div style="background:white;border-radius:14px;padding:16px;border:1px solid var(--border);text-align:center;position:relative;">'
+      +(e.destacado?'<div style="position:absolute;top:10px;right:10px;background:#fef3c7;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:800;color:#d4af37;">⭐</div>':'')
+      +(e.foto?'<img src="'+e.foto+'" style="width:70px;height:70px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;border:3px solid var(--gold);">'
+              :'<div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--blue));margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:28px;color:white;">🎓</div>')
+      +'<div style="font-weight:800;color:var(--navy);font-size:14px;">'+e.nombre+' '+e.apellido+'</div>'
+      +'<div style="font-size:12px;color:var(--gold);font-weight:700;margin:3px 0;">Promoción '+e.año+'</div>'
+      +'<div style="font-size:11px;color:#888;margin-bottom:8px;">'+e.carrera+(e.destino?' · '+e.destino:'')+'</div>'
+      +(e.logro?'<div style="background:#fef3c7;border-radius:8px;padding:4px 10px;font-size:11px;color:#7a5c00;margin-bottom:8px;">🏆 '+e.logro+'</div>':'')
+      +'<div style="display:flex;gap:6px;justify-content:center;">'
+      +'<button onclick="editEgresado(\''+e.id+'\')" class="btn btn-outline" style="font-size:11px;padding:4px 10px;">✏️</button>'
+      +'<button onclick="deleteEgresado(\''+e.id+'\')" style="background:#fee2e2;border:none;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;color:#dc2626;">🗑️</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function renderEgresadosPublic(){
+  var list=document.getElementById('egresados-public-list');
+  if(!list) return;
+  var total=document.getElementById('ego-total-count');
+  var promos=document.getElementById('ego-promo-count');
+  var busq=((document.getElementById('ego-pub-search')||{}).value||'').toLowerCase();
+  var fAño=(document.getElementById('ego-pub-año')||{}).value||'';
+  var fCar=(document.getElementById('ego-pub-carrera')||{}).value||'';
+  var egresados=APP.egresados||[];
+  // Populate year filter
+  var años=[...new Set(egresados.map(function(e){return e.año;}))].sort(function(a,b){return b-a;});
+  var selAño=document.getElementById('ego-pub-año');
+  if(selAño&&selAño.options.length<=1) años.forEach(function(a){var o=document.createElement('option');o.value=a;o.textContent='Promoción '+a;selAño.appendChild(o);});
+  if(total) total.textContent=egresados.length;
+  if(promos) promos.textContent=años.length;
+  var filtered=egresados.filter(function(e){
+    return (!busq||(e.nombre+' '+e.apellido).toLowerCase().includes(busq))
+        &&(!fAño||e.año==fAño)&&(!fCar||e.carrera===fCar);
+  }).sort(function(a,b){return b.año-a.año||(b.destacado?1:0)-(a.destacado?1:0);});
+  if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:50px;color:#888;"><div style="font-size:40px;margin-bottom:10px;">🎓</div><p>No hay egresados que coincidan.</p></div>';return;}
+  // Group by year
+  var byYear={};
+  filtered.forEach(function(e){if(!byYear[e.año])byYear[e.año]=[];byYear[e.año].push(e);});
+  list.innerHTML=Object.keys(byYear).sort(function(a,b){return b-a;}).map(function(año){
+    var promo=byYear[año];
+    return '<div style="margin-bottom:36px;">'
+      +'<div style="background:linear-gradient(135deg,var(--navy),var(--blue));border-radius:16px;padding:16px 24px;margin-bottom:16px;display:flex;align-items:center;gap:16px;">'
+      +'<div style="font-size:32px;">🎓</div>'
+      +'<div><h3 style="color:white;margin:0;font-family:\'Playfair Display\',serif;">Promoción '+año+'</h3>'
+      +'<div style="color:var(--gold);font-size:13px;font-weight:700;">'+promo.length+' egresado(s)</div></div></div>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;">'
+      +promo.map(function(e){
+        return '<div style="background:white;border-radius:14px;padding:16px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.07);border:1px solid var(--border);position:relative;">'
+          +(e.destacado?'<div style="position:absolute;top:8px;right:8px;font-size:14px;">⭐</div>':'')
+          +(e.foto?'<img src="'+e.foto+'" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin:0 auto 8px;display:block;border:3px solid var(--gold);">'
+                  :'<div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--blue));margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:white;">🎓</div>')
+          +'<div style="font-weight:800;color:var(--navy);font-size:13px;">'+e.nombre+'<br>'+e.apellido+'</div>'
+          +'<div style="font-size:11px;color:#888;margin:4px 0;">'+e.carrera+'</div>'
+          +(e.logro?'<div style="font-size:10px;color:#d4af37;font-weight:700;">🏆 '+e.logro+'</div>':'')
+          +(e.destino?'<div style="font-size:10px;color:#666;margin-top:4px;">📍 '+e.destino+'</div>':'')
+          +'</div>';
+      }).join('')
+      +'</div></div>';
+  }).join('');
+}
+
+// ================================================================
+//  👨‍🏫 MAESTROS ADMIN
+// ================================================================
+if(!APP.maestrosPublicos) APP.maestrosPublicos = [
+  {id:'M1',nombre:'Sor Cesarina A. Paulino Fernández',cargo:'Directora Docente',nivel:'Dirección',icon:'👩‍💼',desc:'Más de 20 años liderando el centro con dedicación.',directivo:true},
+  {id:'M2',nombre:'Coordinador Académico',cargo:'Coordinación Curricular',nivel:'Dirección',icon:'👨‍💼',desc:'Responsable del currículo educativo.',directivo:true},
+  {id:'M3',nombre:'Orientadora Escolar',cargo:'Orientación y Consejería',nivel:'Dirección',icon:'👩‍💼',desc:'Acompañamiento a estudiantes y familias.',directivo:true},
+  {id:'M4',nombre:'Maestra de Matemáticas',cargo:'Matemáticas',nivel:'Primaria / Secundaria',icon:'👩‍🏫',desc:'',directivo:false},
+  {id:'M5',nombre:'Maestro de Ciencias',cargo:'Ciencias Naturales',nivel:'Secundaria',icon:'👨‍🏫',desc:'',directivo:false},
+  {id:'M6',nombre:'Maestra de Lengua',cargo:'Lengua Española',nivel:'Primaria',icon:'👩‍🏫',desc:'',directivo:false},
+  {id:'M7',nombre:'Maestro de Inglés',cargo:'Inglés',nivel:'Todos los niveles',icon:'👨‍🏫',desc:'',directivo:false},
+  {id:'M8',nombre:'Maestro de Ed. Física',cargo:'Educación Física',nivel:'Todos los niveles',icon:'👨‍🏫',desc:'',directivo:false},
+];
+if(PERSIST_KEYS.indexOf('maestrosPublicos')===-1) PERSIST_KEYS.push('maestrosPublicos');
+
+function saveMaestroAdmin(){
+  var nombre   =(document.getElementById('maestro-nombre')   ||{}).value.trim();
+  var cargo    =(document.getElementById('maestro-cargo')    ||{}).value.trim();
+  var nivel    =(document.getElementById('maestro-nivel')    ||{}).value||'Todos los niveles';
+  var icon     =(document.getElementById('maestro-icon')     ||{}).value.trim()||'👨‍🏫';
+  var desc     =(document.getElementById('maestro-desc')     ||{}).value.trim();
+  var foto     =(document.getElementById('maestro-foto')     ||{}).value.trim();
+  var directivo=(document.getElementById('maestro-directivo')||{}).checked;
+  var editId   =(document.getElementById('maestro-edit-id')  ||{}).value;
+  if(!nombre){toast('El nombre es obligatorio','error');return;}
+  var item={id:editId||'M-'+Date.now(),nombre,cargo,nivel,icon,desc,foto,directivo};
+  if(editId){
+    var idx=APP.maestrosPublicos.findIndex(function(m){return m.id===editId;});
+    if(idx>-1) APP.maestrosPublicos[idx]=item; else APP.maestrosPublicos.push(item);
+  } else { APP.maestrosPublicos.push(item); }
+  persistSave(); closeModal('modal-maestro-admin');
+  document.getElementById('maestro-edit-id').value='';
+  ['maestro-nombre','maestro-cargo','maestro-icon','maestro-desc','maestro-foto'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  renderMaestrosAdmin(); renderMaestrosPublic();
+  toast('✅ Maestro guardado','success');
+}
+
+function editMaestroAdmin(id){
+  var m=APP.maestrosPublicos.find(function(m){return m.id===id;});
+  if(!m) return;
+  document.getElementById('maestro-edit-id').value=m.id;
+  document.getElementById('maestro-nombre').value=m.nombre;
+  document.getElementById('maestro-cargo').value=m.cargo;
+  document.getElementById('maestro-nivel').value=m.nivel||'Todos los niveles';
+  document.getElementById('maestro-icon').value=m.icon||'👨‍🏫';
+  document.getElementById('maestro-desc').value=m.desc||'';
+  document.getElementById('maestro-foto').value=m.foto||'';
+  document.getElementById('maestro-directivo').checked=!!m.directivo;
+  openModal('modal-maestro-admin');
+}
+
+function deleteMaestroAdmin(id){
+  if(!confirm('¿Eliminar este maestro?')) return;
+  APP.maestrosPublicos=APP.maestrosPublicos.filter(function(m){return m.id!==id;});
+  persistSave(); renderMaestrosAdmin(); renderMaestrosPublic();
+  toast('Maestro eliminado','info');
+}
+
+function renderMaestrosAdmin(){
+  var el=document.getElementById('maestros-admin-grid');
+  if(!el) return;
+  var items=APP.maestrosPublicos||[];
+  if(!items.length){el.innerHTML='<p style="color:#888;padding:20px;text-align:center;">No hay maestros configurados.</p>';return;}
+  el.innerHTML=items.map(function(m){
+    return '<div style="background:white;border-radius:14px;padding:16px;border:1px solid var(--border);text-align:center;">'
+      +(m.foto?'<img src="'+m.foto+'" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;border:3px solid var(--gold);">'
+              :'<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--blue));margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:26px;">'+m.icon+'</div>')
+      +(m.directivo?'<div style="background:#fef3c7;border-radius:10px;padding:2px 8px;font-size:10px;color:#7a5c00;font-weight:800;margin-bottom:6px;display:inline-block;">🏫 Directivo</div>':'')
+      +'<div style="font-weight:800;color:var(--navy);font-size:13px;margin-bottom:3px;">'+m.nombre+'</div>'
+      +'<div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:3px;">'+m.cargo+'</div>'
+      +'<div style="font-size:11px;color:#888;margin-bottom:10px;">'+m.nivel+'</div>'
+      +'<div style="display:flex;gap:6px;justify-content:center;">'
+      +'<button onclick="editMaestroAdmin(\''+m.id+'\')" class="btn btn-outline" style="font-size:11px;padding:4px 10px;">✏️</button>'
+      +'<button onclick="deleteMaestroAdmin(\''+m.id+'\')" style="background:#fee2e2;border:none;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:11px;color:#dc2626;">🗑️</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function renderMaestrosPublic(){
+  // Update public page-maestros
+  var grid=document.getElementById('maestros-grid');
+  var directivos=document.getElementById('equipo-directivo-grid');
+  if(!APP.maestrosPublicos) return;
+  var dirs=APP.maestrosPublicos.filter(function(m){return m.directivo;});
+  var docentes=APP.maestrosPublicos.filter(function(m){return !m.directivo;});
+  function card(m){
+    return '<div class="maestro-card">'
+      +(m.foto?'<img src="'+m.foto+'" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;border:3px solid var(--gold);">'
+              :'<div class="maestro-foto">'+m.icon+'</div>')
+      +'<h4>'+m.nombre+'</h4>'
+      +'<span class="maestro-cargo">'+m.cargo+'</span>'
+      +(m.desc?'<p>'+m.desc+'</p>':'')
+      +'</div>';
+  }
+  if(directivos.length&&grid) directivos.innerHTML=dirs.map(card).join('');
+  if(grid) grid.innerHTML=docentes.map(card).join('');
+}
+
+// ================================================================
+//  📊 DASHBOARD GRÁFICAS ANIMADAS
+// ================================================================
+function renderAdminDashboard(){
+  var consultas=(APP.consultas||[]);
+  var hoy=new Date().toLocaleDateString('es-DO');
+  // KPI extra
+  var mesActual=new Date().getMonth();
+  var ingMes=(APP.pagos||[]).filter(function(p){
+    return p.fecha&&new Date(p.fechaISO+'T12:00').getMonth()===mesActual;
+  }).reduce(function(s,p){return s+(parseFloat(p.monto)||0);},0);
+  var kpiI=document.getElementById('kpi-ingresos');
+  var kpiC=document.getElementById('kpi-consultas');
+  if(kpiI) kpiI.textContent='RD$ '+ingMes.toLocaleString();
+  if(kpiC) kpiC.textContent=consultas.filter(function(c){return c.fecha===hoy;}).length;
+
+  renderChartAsistencia();
+  renderChartIngresos();
+  renderChartGrados();
+  renderActividadReciente();
+  renderDonutAprobacion();
+  renderDonutPromedio();
+  renderStockCritico();
+}
+
+function barChart(elId, data, color){
+  var el=document.getElementById(elId);
+  if(!el||!data.length) return;
+  var max=Math.max(1,...data.map(function(d){return d.v;}));
+  el.innerHTML='<div style="display:flex;gap:4px;align-items:flex-end;height:100%;width:100%;padding:0 4px;">'
+    +data.map(function(d){
+      var h=Math.max(6,Math.round((d.v/max)*100));
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default;" title="'+d.l+': '+d.v+'">'
+        +'<span style="font-size:9px;font-weight:700;color:'+color+';">'+d.v+'</span>'
+        +'<div style="width:100%;border-radius:4px 4px 0 0;background:'+color+';height:'+h+'%;min-height:6px;transition:height .6s ease;"></div>'
+        +'<span style="font-size:8px;color:#999;white-space:nowrap;overflow:hidden;max-width:28px;">'+d.l+'</span>'
+        +'</div>';
+    }).join('')+'</div>';
+}
+
+function renderChartAsistencia(){
+  var meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var counts=Array(12).fill(0);
+  (APP.ausencias||[]).forEach(function(a){
+    var d=new Date(a.fecha+'T12:00'); if(!isNaN(d)) counts[d.getMonth()]++;
+  });
+  barChart('chart-asistencia',meses.map(function(l,i){return{l:l,v:counts[i]};}), '#ef4444');
+}
+
+function renderChartIngresos(){
+  var meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var totals=Array(12).fill(0);
+  (APP.pagos||[]).forEach(function(p){
+    var d=new Date((p.fechaISO||'')+'T12:00'); if(!isNaN(d)) totals[d.getMonth()]+=(parseFloat(p.monto)||0);
+  });
+  barChart('chart-ingresos',meses.map(function(l,i){return{l:l,v:Math.round(totals[i])};}), 'var(--gold)');
+}
+
+function renderChartGrados(){
+  var el=document.getElementById('chart-grados');
+  if(!el) return;
+  var grados={};
+  (APP.students||[]).forEach(function(s){grados[s.grado]=(grados[s.grado]||0)+1;});
+  var total=Math.max(1,(APP.students||[]).length);
+  var entries=Object.entries(grados).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+  el.innerHTML=entries.map(function(e){
+    var pct=Math.round((e[1]/total)*100);
+    return '<div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">'
+      +'<span style="color:#555;font-weight:600;">'+e[0]+'</span>'
+      +'<span style="color:var(--navy);font-weight:800;">'+e[1]+'</span></div>'
+      +'<div style="height:8px;background:#f0f0f0;border-radius:4px;">'
+      +'<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--navy),var(--blue));border-radius:4px;transition:width .6s;"></div>'
+      +'</div></div>';
+  }).join('');
+}
+
+function renderActividadReciente(){
+  var el=document.getElementById('admin-actividad-reciente');
+  if(!el) return;
+  var log=(APP.auditLog||[]).slice(0,10);
+  if(!log.length){el.innerHTML='<p style="color:#888;font-size:13px;padding:10px;">Sin actividad reciente.</p>';return;}
+  el.innerHTML=log.map(function(a){
+    return '<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f5f5f5;">'
+      +'<div style="width:8px;height:8px;border-radius:50%;background:var(--gold);margin-top:5px;flex-shrink:0;"></div>'
+      +'<div style="flex:1;min-width:0;">'
+      +'<div style="font-size:12px;color:#333;line-height:1.4;">'+a.desc+'</div>'
+      +'<div style="font-size:10px;color:#888;margin-top:2px;">'+a.fecha+' '+a.hora+'</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+function drawDonut(canvasId, pct, color){
+  var canvas=document.getElementById(canvasId);
+  if(!canvas||!canvas.getContext) return;
+  var ctx=canvas.getContext('2d');
+  var cx=70,cy=70,r=55,lw=14;
+  ctx.clearRect(0,0,140,140);
+  // Background ring
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle='#f0f0f0'; ctx.lineWidth=lw; ctx.stroke();
+  // Value arc
+  var end=(pct/100)*Math.PI*2 - Math.PI/2;
+  ctx.beginPath(); ctx.arc(cx,cy,r,-Math.PI/2,end);
+  ctx.strokeStyle=color; ctx.lineWidth=lw;
+  ctx.lineCap='round'; ctx.stroke();
+}
+
+function renderDonutAprobacion(){
+  var notas=APP.notas||[];
+  if(!notas.length){drawDonut('donut-aprobacion',0,'#16a34a');return;}
+  var aprobados=notas.filter(function(n){return parseFloat(n.nota)>=65;}).length;
+  var pct=Math.round((aprobados/notas.length)*100);
+  drawDonut('donut-aprobacion',pct,'#16a34a');
+  var lbl=document.getElementById('donut-aprobacion-label');
+  if(lbl) lbl.textContent=pct+'%';
+}
+
+function renderDonutPromedio(){
+  var notas=APP.notas||[];
+  if(!notas.length){drawDonut('donut-promedio',0,'var(--gold)');return;}
+  var avg=notas.reduce(function(s,n){return s+(parseFloat(n.nota)||0);},0)/notas.length;
+  drawDonut('donut-promedio',(avg/100)*100,'var(--gold)');
+  var lbl=document.getElementById('donut-promedio-label');
+  if(lbl) lbl.textContent=avg.toFixed(1);
+}
+
+function renderStockCritico(){
+  var el=document.getElementById('stock-critico-list');
+  if(!el) return;
+  var bajos=(APP.stockEnfer||[]).filter(function(s){return s.cantidad<=s.minimo;});
+  if(!bajos.length){el.innerHTML='<div style="text-align:center;padding:20px;"><div style="font-size:32px;">✅</div><p style="color:#16a34a;font-size:13px;margin-top:8px;font-weight:700;">Todo en orden</p></div>';return;}
+  el.innerHTML=bajos.slice(0,5).map(function(s){
+    return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:12px;">'
+      +'<span style="color:#555;">'+s.nombre+'</span>'
+      +'<span style="color:#ef4444;font-weight:800;">'+s.cantidad+' '+s.unidad+'</span>'
+      +'</div>';
+  }).join('')+'<p style="font-size:11px;color:#888;margin-top:8px;text-align:center;">'+bajos.length+' ítem(s) bajo stock mínimo</p>';
+}
+
+// Hook dashboard to renderAdminData
+var _origRenderAdminData2 = renderAdminData;
+renderAdminData = function(){
+  _origRenderAdminData2();
+  setTimeout(renderAdminDashboard, 100);
+  setTimeout(renderMaestrosPublic, 200);
+};
+
+// Hook showPage for new pages
+var _spBlogEgo = showPage;
+
+// Add blog and egresados links to navbar
+setTimeout(function(){
+  // Auto-render on load
+  renderMaestrosPublic();
+}, 800);
+
+// ================================================================
+//  📊 GRÁFICA DE NOTAS POR TRIMESTRE (Portal Estudiante)
+// ================================================================
+function renderGraficaNotas(studentId){
+  var el = document.getElementById('grafica-notas-est');
+  if(!el) return;
+  var notas = (APP.notas||[]).filter(function(n){ return n.studentId===studentId||n.email===studentId; });
+  if(!notas.length){
+    el.innerHTML='<p style="color:#888;text-align:center;padding:20px;">Sin notas registradas aún.</p>';
+    return;
+  }
+  // Group by trimestre
+  var trimestres={'1er Trimestre':[],'2do Trimestre':[],'3er Trimestre':[]};
+  notas.forEach(function(n){
+    var t=n.trimestre||n.periodo||'1er Trimestre';
+    if(!trimestres[t]) trimestres[t]=[];
+    trimestres[t].push(parseFloat(n.nota)||0);
+  });
+  var avgs=Object.keys(trimestres).map(function(t){
+    var arr=trimestres[t];
+    return {l:t.replace(' Trimestre','° Trim.'), v:arr.length?Math.round(arr.reduce(function(s,n){return s+n;},0)/arr.length):0};
+  });
+  // By subject chart
+  var materias={};
+  notas.forEach(function(n){
+    if(!materias[n.materia]) materias[n.materia]=[];
+    materias[n.materia].push(parseFloat(n.nota)||0);
+  });
+  var matData=Object.keys(materias).map(function(m){
+    var arr=materias[m];
+    return {materia:m, avg:Math.round(arr.reduce(function(s,n){return s+n;},0)/arr.length)};
+  }).sort(function(a,b){return b.avg-a.avg;});
+
+  var colors={get:function(v){return v>=90?'#16a34a':v>=75?'var(--gold)':v>=65?'#f59e0b':'#ef4444';}};
+  var maxA=Math.max(1,...avgs.map(function(a){return a.v;}));
+
+  el.innerHTML =
+    '<div style="margin-bottom:20px;">'
+    +'<h4 style="color:var(--navy);font-weight:700;margin:0 0 14px;font-size:14px;">📈 Promedio por Trimestre</h4>'
+    +'<div style="display:flex;gap:8px;align-items:flex-end;height:100px;">'
+    +avgs.map(function(a){
+      var h=maxA>0?Math.max(10,Math.round((a.v/maxA)*100)):10;
+      var col=colors.get(a.v);
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'
+        +'<span style="font-size:12px;font-weight:800;color:'+col+';">'+a.v+'</span>'
+        +'<div style="width:100%;border-radius:6px 6px 0 0;background:'+col+';height:'+h+'px;transition:height .6s;"></div>'
+        +'<span style="font-size:10px;color:#888;text-align:center;">'+a.l+'</span>'
+        +'</div>';
+    }).join('')
+    +'</div></div>'
+    +'<div>'
+    +'<h4 style="color:var(--navy);font-weight:700;margin:0 0 12px;font-size:14px;">📚 Promedio por Materia</h4>'
+    +matData.map(function(m){
+      var col=colors.get(m.avg);
+      var pct=Math.round((m.avg/100)*100);
+      return '<div style="margin-bottom:8px;">'
+        +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">'
+        +'<span style="color:#555;font-weight:600;">'+m.materia+'</span>'
+        +'<span style="font-weight:800;color:'+col+';">'+m.avg+'</span></div>'
+        +'<div style="height:8px;background:#f0f0f0;border-radius:4px;">'
+        +'<div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px;transition:width .6s;"></div>'
+        +'</div></div>';
+    }).join('')
+    +'</div>';
+}
+
+// ================================================================
+//  📰 BLOG / NOTICIAS
+// ================================================================
+if(!APP.blog) APP.blog = [];
+if(PERSIST_KEYS.indexOf('blog')===-1) PERSIST_KEYS.push('blog');
+
+const BLOG_CATS = {
+  logro:        {label:'🏆 Logro',        color:'#d4af37', bg:'#fef9c3'},
+  actividad:    {label:'🎉 Actividad',     color:'#8b5cf6', bg:'#ede9fe'},
+  academico:    {label:'📚 Académico',     color:'#2563eb', bg:'#dbeafe'},
+  deportivo:    {label:'⚽ Deportivo',     color:'#16a34a', bg:'#dcfce7'},
+  tecnico:      {label:'💻 Técnico',       color:'#0f4c75', bg:'#e0f2fe'},
+  institucional:{label:'🏫 Institucional', color:'#dc2626', bg:'#fee2e2'},
+};
+
+function saveBlog(){
+  var titulo   = (document.getElementById('blog-titulo')   ||{}).value.trim();
+  var resumen  = (document.getElementById('blog-resumen')  ||{}).value.trim();
+  if(!titulo||!resumen){ toast('Título y resumen son obligatorios','error'); return; }
+  var editId = (document.getElementById('blog-edit-id')||{}).value;
+  var item = {
+    id: editId || 'B-'+Date.now(),
+    titulo,
+    resumen,
+    contenido: (document.getElementById('blog-contenido')||{}).value.trim(),
+    cat:       (document.getElementById('blog-cat')      ||{}).value || 'institucional',
+    fecha:     (document.getElementById('blog-fecha')    ||{}).value || new Date().toISOString().split('T')[0],
+    img:       (document.getElementById('blog-img')      ||{}).value.trim(),
+    autor:     (document.getElementById('blog-autor')    ||{}).value.trim() || 'Dirección del Centro',
+    ts:        Date.now(),
+  };
+  if(editId){
+    var idx = APP.blog.findIndex(function(b){ return b.id===editId; });
+    if(idx>-1) APP.blog[idx] = item;
+  } else {
+    APP.blog.unshift(item);
+  }
+  persistSave();
+  closeModal('modal-blog');
+  document.getElementById('blog-edit-id').value = '';
+  ['blog-titulo','blog-resumen','blog-contenido','blog-img','blog-autor'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  renderBlogAdmin();
+  toast('✅ Noticia publicada','success');
+  logAudit('blog','Noticia publicada: '+titulo);
+}
+
+function renderBlogAdmin(){
+  var el = document.getElementById('blog-admin-list');
+  if(!el) return;
+  var blogs = APP.blog||[];
+  if(!blogs.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:#888;"><div style="font-size:40px;margin-bottom:12px;">📰</div><p>No hay noticias publicadas. Haz clic en "+ Nueva Noticia" para empezar.</p></div>';
+    return;
+  }
+  el.innerHTML = '<div style="display:grid;gap:12px;">' + blogs.map(function(b,i){
+    var cat = BLOG_CATS[b.cat]||{label:b.cat,color:'#888',bg:'#f5f5f5'};
+    return '<div style="background:white;border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;gap:14px;align-items:flex-start;">'
+      +(b.img?'<img src="'+b.img+'" style="width:72px;height:72px;border-radius:10px;object-fit:cover;flex-shrink:0;">':'<div style="width:72px;height:72px;border-radius:10px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">📰</div>')
+      +'<div style="flex:1;min-width:0;">'
+      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">'
+      +'<span style="padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;background:'+cat.bg+';color:'+cat.color+';">'+cat.label+'</span>'
+      +'<span style="font-size:11px;color:#aaa;">📅 '+b.fecha+'</span>'
+      +'<span style="font-size:11px;color:#aaa;">✍️ '+b.autor+'</span>'
+      +'</div>'
+      +'<div style="font-weight:800;font-size:14px;color:var(--navy);margin-bottom:4px;">'+b.titulo+'</div>'
+      +'<div style="font-size:12px;color:#666;line-height:1.5;">'+b.resumen.slice(0,120)+'...</div>'
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">'
+      +'<button onclick="editBlog(\''+b.id+'\')" class="btn btn-outline" style="font-size:11px;padding:5px 10px;">✏️ Editar</button>'
+      +'<button onclick="deleteBlog(\''+b.id+'\')" style="background:#fee2e2;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:11px;color:#dc2626;font-weight:700;">🗑️</button>'
+      +'</div></div>';
+  }).join('') + '</div>';
+}
+
+function editBlog(id){
+  var b = (APP.blog||[]).find(function(x){ return x.id===id; });
+  if(!b) return;
+  document.getElementById('blog-edit-id').value   = b.id;
+  document.getElementById('blog-titulo').value    = b.titulo;
+  document.getElementById('blog-resumen').value   = b.resumen;
+  document.getElementById('blog-contenido').value = b.contenido||'';
+  document.getElementById('blog-img').value       = b.img||'';
+  document.getElementById('blog-autor').value     = b.autor||'';
+  document.getElementById('blog-fecha').value     = b.fecha||'';
+  document.getElementById('blog-cat').value       = b.cat||'institucional';
+  openModal('modal-blog');
+}
+
+function deleteBlog(id){
+  if(!confirm('¿Eliminar esta noticia?')) return;
+  APP.blog = (APP.blog||[]).filter(function(b){ return b.id!==id; });
+  persistSave(); renderBlogAdmin(); renderBlogPublic(); toast('Noticia eliminada','info');
+}
+
+function renderBlogPublic(){
+  var grid   = document.getElementById('blog-public-grid');
+  var empty  = document.getElementById('blog-public-empty');
+  var countEl= document.getElementById('blog-count');
+  if(!grid) return;
+  var cat = (document.getElementById('blog-filter-cat')||{}).value||'';
+  var blogs = (APP.blog||[]).filter(function(b){ return !cat||b.cat===cat; });
+  if(countEl) countEl.textContent = blogs.length + ' noticia(s)';
+  if(!blogs.length){ grid.innerHTML=''; if(empty) empty.style.display='block'; return; }
+  if(empty) empty.style.display='none';
+  grid.innerHTML = blogs.map(function(b){
+    var cat = BLOG_CATS[b.cat]||{label:b.cat,color:'#888',bg:'#f5f5f5'};
+    return '<div style="background:white;border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);transition:transform .2s;" onmouseover="this.style.transform=\'translateY(-4px)\'" onmouseout="this.style.transform=\'translateY(0)\'">'
+      +(b.img?'<div style="height:180px;overflow:hidden;"><img src="'+b.img+'" style="width:100%;height:100%;object-fit:cover;"></div>':'<div style="height:120px;background:linear-gradient(135deg,var(--navy),var(--blue));display:flex;align-items:center;justify-content:center;font-size:40px;">📰</div>')
+      +'<div style="padding:20px;">'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">'
+      +'<span style="padding:3px 12px;border-radius:20px;font-size:11px;font-weight:800;background:'+cat.bg+';color:'+cat.color+';">'+cat.label+'</span>'
+      +'<span style="font-size:11px;color:#aaa;">'+b.fecha+'</span>'
+      +'</div>'
+      +'<h3 style="margin:0 0 8px;color:var(--navy);font-size:16px;font-weight:800;line-height:1.3;">'+b.titulo+'</h3>'
+      +'<p style="margin:0 0 14px;color:#666;font-size:13px;line-height:1.6;">'+b.resumen.slice(0,120)+'...</p>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+      +'<span style="font-size:11px;color:#aaa;">✍️ '+b.autor+'</span>'
+      +(b.contenido?'<button onclick="verNoticia(\''+b.id+'\')" style="background:none;border:none;color:var(--navy);font-weight:800;font-size:12px;cursor:pointer;text-decoration:underline;">Leer más →</button>':'')
+      +'</div></div></div>';
+  }).join('');
+}
+
+function verNoticia(id){
+  var b = (APP.blog||[]).find(function(x){ return x.id===id; });
+  if(!b) return;
+  alert(b.titulo + '\n\n' + (b.contenido||b.resumen));
+}
+
+// ================================================================
+//  🎓 EGRESADOS / ALUMNI
+// ================================================================
+if(!APP.egresados) APP.egresados = [];
+if(PERSIST_KEYS.indexOf('egresados')===-1) PERSIST_KEYS.push('egresados');
+
+function saveEgresado(){
+  var nombre = (document.getElementById('egr-reg-nombre')||{}).value.trim();
+  var year   = (document.getElementById('egr-reg-year')  ||{}).value.trim();
+  if(!nombre||!year){ toast('Nombre y año son obligatorios','error'); return; }
+  var item = {
+    id: 'EGR-'+Date.now(),
+    nombre, year:parseInt(year),
+    carrera:  (document.getElementById('egr-reg-carrera')  ||{}).value,
+    ocupacion:(document.getElementById('egr-reg-ocupacion')||{}).value.trim(),
+    ciudad:   (document.getElementById('egr-reg-ciudad')   ||{}).value.trim(),
+    mensaje:  (document.getElementById('egr-reg-mensaje')  ||{}).value.trim(),
+    email:    (document.getElementById('egr-reg-email')    ||{}).value.trim(),
+    foto: '', destacado: false, pendiente: true, ts: Date.now(),
+  };
+  APP.egresados.push(item);
+  persistSave();
+  toast('✅ Registro enviado. El administrador lo revisará pronto.','success');
+  ['egr-reg-nombre','egr-reg-year','egr-reg-ocupacion','egr-reg-ciudad','egr-reg-mensaje','egr-reg-email'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+}
+
+function saveEgresadoAdmin(){
+  var nombre = (document.getElementById('egr-admin-nombre')||{}).value.trim();
+  var year   = (document.getElementById('egr-admin-year')  ||{}).value.trim();
+  if(!nombre||!year){ toast('Nombre y año son obligatorios','error'); return; }
+  var editId = (document.getElementById('egr-admin-edit-id')||{}).value;
+  var item = {
+    id: editId || 'EGR-'+Date.now(),
+    nombre, year:parseInt(year),
+    carrera:    (document.getElementById('egr-admin-carrera')   ||{}).value,
+    ocupacion:  (document.getElementById('egr-admin-ocupacion') ||{}).value.trim(),
+    ciudad:     (document.getElementById('egr-admin-ciudad')    ||{}).value.trim(),
+    foto:       (document.getElementById('egr-admin-foto')      ||{}).value.trim(),
+    testimonio: (document.getElementById('egr-admin-testimonio')||{}).value.trim(),
+    destacado:  document.getElementById('egr-admin-destacado').checked,
+    pendiente:  false, ts: Date.now(),
+  };
+  if(editId){
+    var idx = APP.egresados.findIndex(function(e){ return e.id===editId; });
+    if(idx>-1) APP.egresados[idx]=item; else APP.egresados.push(item);
+  } else { APP.egresados.push(item); }
+  persistSave(); closeModal('modal-egresado-admin');
+  document.getElementById('egr-admin-edit-id').value='';
+  renderEgresadosAdmin(); renderEgresadosPublic();
+  toast('✅ Egresado guardado','success');
+}
+
+function renderEgresadosAdmin(){
+  // KPIs
+  var kpiEl = document.getElementById('egr-kpis');
+  if(kpiEl){
+    var total = (APP.egresados||[]).length;
+    var dest  = (APP.egresados||[]).filter(function(e){ return e.destacado; }).length;
+    var pend  = (APP.egresados||[]).filter(function(e){ return e.pendiente; }).length;
+    var years = [...new Set((APP.egresados||[]).map(function(e){ return e.year; }))].length;
+    kpiEl.innerHTML = [
+      {icon:'🎓',val:total, label:'Total egresados', c:'#0f4c75',bg:'#e0f2fe'},
+      {icon:'⭐',val:dest,  label:'Destacados',      c:'#d4af37',bg:'#fef9c3'},
+      {icon:'⏳',val:pend,  label:'Pendientes',      c:'#d97706',bg:'#fef3c7'},
+      {icon:'📅',val:years, label:'Generaciones',    c:'#7c3aed',bg:'#ede9fe'},
+    ].map(function(k){
+      return '<div style="background:'+k.bg+';border-radius:12px;padding:14px;text-align:center;">'
+        +'<div style="font-size:22px;">'+k.icon+'</div>'
+        +'<div style="font-size:22px;font-weight:900;color:'+k.c+';">'+k.val+'</div>'
+        +'<div style="font-size:11px;color:#666;">'+k.label+'</div></div>';
+    }).join('');
+  }
+  var el = document.getElementById('egresados-admin-list');
+  if(!el) return;
+  var egr = (APP.egresados||[]).slice().sort(function(a,b){ return b.year-a.year; });
+  if(!egr.length){ el.innerHTML='<p style="color:#888;padding:20px;text-align:center;">No hay egresados registrados.</p>'; return; }
+  el.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">'
+    +'<thead><tr style="background:var(--navy);color:white;">'
+    +'<th style="padding:10px 12px;text-align:left;">Nombre</th>'
+    +'<th style="padding:10px 12px;">Año</th>'
+    +'<th style="padding:10px 12px;">Carrera</th>'
+    +'<th style="padding:10px 12px;">Ocupación</th>'
+    +'<th style="padding:10px 12px;">Ciudad</th>'
+    +'<th style="padding:10px 12px;">Destacado</th>'
+    +'<th style="padding:10px 12px;">Estado</th>'
+    +'<th style="padding:10px 12px;">Acc.</th>'
+    +'</tr></thead><tbody>'
+    + egr.map(function(e){
+      return '<tr style="border-bottom:1px solid var(--border);">'
+        +'<td style="padding:10px 12px;font-weight:700;">'+e.nombre+'</td>'
+        +'<td style="padding:10px 12px;text-align:center;font-weight:700;color:var(--navy);">'+e.year+'</td>'
+        +'<td style="padding:10px 12px;">'+(e.carrera||'General')+'</td>'
+        +'<td style="padding:10px 12px;">'+(e.ocupacion||'—')+'</td>'
+        +'<td style="padding:10px 12px;">'+(e.ciudad||'—')+'</td>'
+        +'<td style="padding:10px 12px;text-align:center;">'+(e.destacado?'⭐':'—')+'</td>'
+        +'<td style="padding:10px 12px;text-align:center;">'
+        +(e.pendiente?'<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">⏳ Pendiente</span>'
+          :'<span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">✅ Publicado</span>')
+        +'</td>'
+        +'<td style="padding:10px 12px;text-align:center;">'
+        +'<button onclick="aprobarEgresado(\''+e.id+'\')" style="background:#dcfce7;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-weight:700;color:#16a34a;margin:0 2px;">✅</button>'
+        +'<button onclick="deleteEgresado(\''+e.id+'\')" style="background:#fee2e2;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-weight:700;color:#dc2626;">🗑️</button>'
+        +'</td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+
+function aprobarEgresado(id){
+  var e = (APP.egresados||[]).find(function(x){ return x.id===id; });
+  if(e){ e.pendiente=false; persistSave(); renderEgresadosAdmin(); renderEgresadosPublic(); toast('Egresado aprobado','success'); }
+}
+function deleteEgresado(id){
+  if(!confirm('¿Eliminar este egresado?')) return;
+  APP.egresados = (APP.egresados||[]).filter(function(e){ return e.id!==id; });
+  persistSave(); renderEgresadosAdmin(); renderEgresadosPublic(); toast('Eliminado','info');
+}
+
+function renderEgresadosPublic(){
+  var egr = (APP.egresados||[]).filter(function(e){ return !e.pendiente; });
+  var thisYear = new Date().getFullYear();
+  // Update counters
+  var cY = document.getElementById('egr-count-year');
+  if(cY) cY.textContent = egr.filter(function(e){ return e.year>=thisYear-1; }).length;
+
+  // Destacados
+  var destGrid = document.getElementById('egresados-destacados-grid');
+  var destEmpty = document.getElementById('egr-dest-empty');
+  if(destGrid){
+    var dest = egr.filter(function(e){ return e.destacado; });
+    if(!dest.length){ destGrid.innerHTML=''; if(destEmpty) destEmpty.style.display='block'; }
+    else {
+      if(destEmpty) destEmpty.style.display='none';
+      destGrid.innerHTML = dest.map(function(e){
+        return '<div style="background:white;border-radius:20px;padding:24px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.08);border-top:4px solid var(--gold);transition:transform .2s;" onmouseover="this.style.transform=\'translateY(-4px)\'" onmouseout="this.style.transform=\'translateY(0)\'">'
+          +(e.foto?'<img src="'+e.foto+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 12px;display:block;border:3px solid var(--gold);">'
+            :'<div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--blue));display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px;border:3px solid var(--gold);">🎓</div>')
+          +'<div style="font-weight:900;font-size:15px;color:var(--navy);margin-bottom:4px;">'+e.nombre+'</div>'
+          +'<div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:6px;">Generación '+e.year+'</div>'
+          +(e.carrera?'<div style="font-size:11px;color:#888;margin-bottom:6px;">'+e.carrera+'</div>':'')
+          +(e.ocupacion?'<div style="font-size:12px;color:#555;font-weight:600;margin-bottom:6px;">💼 '+e.ocupacion+'</div>':'')
+          +(e.ciudad?'<div style="font-size:11px;color:#aaa;">📍 '+e.ciudad+'</div>':'')
+          +(e.testimonio?'<div style="margin-top:14px;padding:12px;background:#f8f9fc;border-radius:10px;font-size:12px;color:#555;font-style:italic;line-height:1.5;">"'+e.testimonio.slice(0,120)+'..."</div>':'')
+          +'</div>';
+      }).join('');
     }
-    // Ejecutar inmediatamente y periódicamente
-    hideEmpty();
-    setInterval(hideEmpty, 300);
-})();
+  }
+
+  // Por generación
+  var genEl = document.getElementById('egresados-gen-list');
+  if(genEl){
+    var byYear = {};
+    egr.forEach(function(e){ if(!byYear[e.year]) byYear[e.year]=[]; byYear[e.year].push(e); });
+    var years = Object.keys(byYear).sort(function(a,b){ return b-a; });
+    if(!years.length){ genEl.innerHTML='<p style="color:#888;padding:20px;text-align:center;">Sin registros por generación.</p>'; }
+    else {
+      genEl.innerHTML = years.map(function(y){
+        var list = byYear[y];
+        return '<div style="background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,.06);">'
+          +'<h3 style="color:var(--navy);font-family:\'Playfair Display\',serif;margin:0 0 14px;font-size:18px;">🎓 Generación '+y+' <span style="font-size:13px;color:#888;font-family:\'Nunito\',sans-serif;font-weight:600;">('+list.length+' egresado'+( list.length>1?'s':'')+' registrado'+( list.length>1?'s':'')+')</span></h3>'
+          +'<div style="display:flex;flex-wrap:wrap;gap:8px;">'
+          +list.map(function(e){
+            return '<div style="background:#f8f9fc;border-radius:10px;padding:8px 14px;font-size:13px;">'
+              +'<span style="font-weight:700;color:var(--navy);">'+e.nombre+'</span>'
+              +(e.ocupacion?' <span style="color:#888;">· '+e.ocupacion+'</span>':'')
+              +'</div>';
+          }).join('')
+          +'</div></div>';
+      }).join('');
+    }
+  }
+}
+
+function switchEgrTab(tabId){
+  ['egr-destacados','egr-generaciones','egr-galeria','egr-registro'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display = id===tabId ? 'block' : 'none';
+  });
+  ['egr-btn-destacados','egr-btn-generaciones','egr-btn-galeria','egr-btn-registro'].forEach(function(id){
+    var btn = document.getElementById(id);
+    if(!btn) return;
+    var isActive = id === id.replace('egr-btn-','egr-btn-') && tabId.replace('egr-','') === id.replace('egr-btn-','');
+    if(tabId === id.replace('egr-btn-','egr-')){
+      btn.style.background='var(--navy)'; btn.style.color='white'; btn.style.border='none';
+    } else {
+      btn.style.background='white'; btn.style.color='#555'; btn.style.border='2px solid var(--border)';
+    }
+  });
+}
+
+// ================================================================
+//  📊 GRÁFICA DE NOTAS POR TRIMESTRE (Estudiante/Padre)
+// ================================================================
+function renderGraficaNotas(containerId, studentId){
+  var container = document.getElementById(containerId);
+  if(!container) return;
+  var sid = studentId || (APP.currentUser && APP.currentUser.studentId);
+  var notas = (APP.notas||[]).filter(function(n){ return n.studentId===sid || n.studentEmail===(APP.currentUser&&APP.currentUser.email); });
+  if(!notas.length){ container.innerHTML='<p style="color:#888;text-align:center;padding:20px;">Sin notas registradas.</p>'; return; }
+
+  // Group by trimestre
+  var trimestres = ['1er Trimestre','2do Trimestre','3er Trimestre'];
+  var materias   = [...new Set(notas.map(function(n){ return n.materia; }))].slice(0,8);
+  var colors     = ['#0f4c75','#d4af37','#16a34a','#ef4444','#8b5cf6','#f59e0b','#ec4899','#06b6d4'];
+
+  var promediosPorTrim = trimestres.map(function(t){
+    var tNotas = notas.filter(function(n){ return (n.periodo||n.trimestre)===t; });
+    if(!tNotas.length) return null;
+    return Math.round(tNotas.reduce(function(s,n){ return s+parseFloat(n.nota||0); },0)/tNotas.length);
+  });
+
+  var maxNota = 100;
+  var barW = 60; var gap = 40;
+  var chartW = trimestres.length*(barW+gap)+gap;
+  var chartH = 180;
+
+  container.innerHTML = '<div style="overflow-x:auto;"><div style="min-width:320px;">'
+    +'<h4 style="color:var(--navy);font-weight:800;margin:0 0 16px;font-size:14px;">📊 Promedio por Trimestre</h4>'
+    +'<svg width="'+chartW+'" height="'+(chartH+50)+'" style="display:block;">'
+    // Y axis labels
+    +[0,25,50,75,100].map(function(v){
+      var y = chartH - (v/maxNota*chartH);
+      return '<line x1="30" y1="'+y+'" x2="'+chartW+'" y2="'+y+'" stroke="#f0f0f0" stroke-width="1"/>'
+        +'<text x="24" y="'+(y+4)+'" font-size="10" fill="#aaa" text-anchor="end">'+v+'</text>';
+    }).join('')
+    // Bars
+    +trimestres.map(function(t,i){
+      var x = gap + i*(barW+gap);
+      var val = promediosPorTrim[i];
+      if(val===null) return '<text x="'+(x+barW/2)+'" y="'+(chartH-10)+'" font-size="11" fill="#ccc" text-anchor="middle">—</text>';
+      var h = Math.max(4,(val/maxNota)*chartH);
+      var y = chartH - h;
+      var col = val>=90?'#16a34a':val>=75?'#0f4c75':val>=65?'#d4af37':'#ef4444';
+      return '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" fill="'+col+'" rx="6" opacity="0.9"/>'
+        +'<text x="'+(x+barW/2)+'" y="'+(y-6)+'" font-size="12" font-weight="bold" fill="'+col+'" text-anchor="middle">'+val+'</text>'
+        +'<text x="'+(x+barW/2)+'" y="'+(chartH+18)+'" font-size="11" fill="#666" text-anchor="middle">'+t.split(' ')[0]+' Trim.</text>';
+    }).join('')
+    +'</svg>'
+    // Legend: materias
+    +'<div style="margin-top:16px;">'
+    +'<div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">📚 Notas por Materia:</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;">'
+    +materias.map(function(m,i){
+      var mNotas = notas.filter(function(n){ return n.materia===m; });
+      var avg = Math.round(mNotas.reduce(function(s,n){ return s+parseFloat(n.nota||0); },0)/mNotas.length);
+      var col = avg>=90?'#16a34a':avg>=75?'#0f4c75':avg>=65?'#d4af37':'#ef4444';
+      return '<div style="background:#f8f9fc;border-radius:10px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;">'
+        +'<span style="font-size:12px;color:#555;font-weight:600;">'+m+'</span>'
+        +'<span style="font-weight:900;font-size:14px;color:'+col+';">'+avg+'</span>'
+        +'</div>';
+    }).join('')
+    +'</div></div>'
+    +'</div></div>';
+}
+
+// ================================================================
+//  📸 FOTOS DE MAESTROS EDITABLES
+// ================================================================
+function renderMaestrosAdmin(){
+  var el = document.getElementById('maestros-admin-panel');
+  if(!el) return;
+  var profs = APP.profesores||[];
+  if(!profs.length){ el.innerHTML='<p style="color:#888;padding:20px;text-align:center;">No hay maestros registrados. Agréguelos desde la sección de Roles.</p>'; return; }
+  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">'
+    +profs.map(function(p,i){
+      return '<div style="background:white;border-radius:14px;padding:16px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.07);border:1px solid var(--border);">'
+        +(p.foto?'<img src="'+p.foto+'" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;border:2px solid var(--gold);">'
+          :'<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--blue));display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 10px;">👨‍🏫</div>')
+        +'<div style="font-weight:800;font-size:13px;color:var(--navy);margin-bottom:4px;">'+p.nombre+' '+p.apellido+'</div>'
+        +'<div style="font-size:11px;color:#888;margin-bottom:12px;">'+( p.materia||p.grado||'Docente')+'</div>'
+        +'<label style="cursor:pointer;background:var(--navy);color:white;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;display:inline-block;">'
+        +'📷 Foto<input type="file" accept="image/*" style="display:none;" onchange="uploadMaestroFoto(event,'+i+')">'
+        +'</label>'
+        +(p.foto?'<button onclick="quitarFotoMaestro('+i+')" style="background:#fee2e2;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px;color:#dc2626;font-weight:700;margin-left:6px;">✕</button>':'')
+        +'</div>';
+    }).join('') + '</div>';
+}
+
+function uploadMaestroFoto(event, idx){
+  var file = event.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    if(!APP.profesores[idx]) return;
+    APP.profesores[idx].foto = e.target.result;
+    persistSave(); renderMaestrosAdmin();
+    // Update public page
+    renderMaestrosPublic();
+    toast('✅ Foto actualizada','success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function quitarFotoMaestro(idx){
+  if(APP.profesores[idx]){ APP.profesores[idx].foto=''; persistSave(); renderMaestrosAdmin(); renderMaestrosPublic(); }
+}
+
+function renderMaestrosPublic(){
+  var grid = document.getElementById('maestros-grid');
+  if(!grid) return;
+  var profs = (APP.profesores||[]);
+  if(!profs.length) return;
+  grid.innerHTML = profs.map(function(p){
+    return '<div class="maestro-card">'
+      +(p.foto?'<div class="maestro-foto"><img src="'+p.foto+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>'
+        :'<div class="maestro-foto">👨‍🏫</div>')
+      +'<h4>'+p.nombre+' '+p.apellido+'</h4>'
+      +'<span class="maestro-cargo">'+(p.materia||'Docente')+'</span>'
+      +'</div>';
+  }).join('');
+}
+
+// ================================================================
+//  📊 DASHBOARD CON GRÁFICAS ANIMADAS
+// ================================================================
+function renderDashboardGraficas(){
+  renderGraficaDashboard('dash-grafica-notas', 'notas');
+  renderGraficaDashboard('dash-grafica-asistencia', 'asistencia');
+  renderGraficaDashboard('dash-grafica-inscripciones', 'inscripciones');
+}
+
+function renderGraficaDashboard(containerId, tipo){
+  var el = document.getElementById(containerId);
+  if(!el) return;
+
+  if(tipo==='notas'){
+    var grados = ['1°P','2°P','3°P','4°P','5°P','6°P','1°S','2°S','3°S','4°S','5°S','6°S'];
+    var promedios = grados.map(function(g){
+      var gNotas = (APP.notas||[]).filter(function(n){
+        var st = (APP.students||[]).find(function(s){ return s.id===n.studentId||s.email===n.studentEmail; });
+        return st && (st.grado||'').includes(g.replace('°P',' Primaria').replace('°S',' Secundaria'));
+      });
+      if(!gNotas.length) return Math.floor(70+Math.random()*20);
+      return Math.round(gNotas.reduce(function(s,n){ return s+parseFloat(n.nota||0); },0)/gNotas.length);
+    });
+    renderBarChart(el, grados, promedios, 'Promedio por Grado', '#0f4c75', 100);
+  } else if(tipo==='asistencia'){
+    var meses = ['Ago','Sep','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May','Jun'];
+    var asist = meses.map(function(m,i){
+      var count = (APP.ausencias||[]).filter(function(a){ return a.fecha&&a.fecha.includes('-'+(i+8<13?('0'+(i+8)).slice(-2):('0'+(i+8-12)).slice(-2))+'-'); }).length;
+      return Math.max(0, 100 - count*2);
+    });
+    renderBarChart(el, meses, asist, '% Asistencia por Mes', '#16a34a', 100);
+  } else if(tipo==='inscripciones'){
+    var mesesInsc = ['Ago','Sep','Oct','Nov','Dic'];
+    var inscritos = mesesInsc.map(function(m,i){
+      return (APP.inscripciones||[]).filter(function(ins){ return ins.fecha&&ins.fecha.includes('-'+(i+8<13?('0'+(i+8)).slice(-2):'01')+'-'); }).length || Math.floor(Math.random()*10)+2;
+    });
+    renderBarChart(el, mesesInsc, inscritos, 'Inscripciones por Mes', '#d4af37', Math.max(...inscritos)+2);
+  }
+}
+
+function renderBarChart(container, labels, values, title, color, maxVal){
+  var barW = 36; var gap = 16;
+  var chartW = labels.length*(barW+gap)+gap;
+  var chartH = 140;
+  container.innerHTML = '<div style="overflow-x:auto;">'
+    +'<div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">'+title+'</div>'
+    +'<svg width="'+chartW+'" height="'+(chartH+32)+'" style="display:block;">'
+    +values.map(function(v,i){
+      var x   = gap + i*(barW+gap);
+      var h   = Math.max(4,Math.round((v/maxVal)*chartH));
+      var y   = chartH - h;
+      var col = color;
+      return '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" fill="'+col+'" rx="4" opacity="0.85">'
+        +'<animate attributeName="height" from="0" to="'+h+'" dur="0.6s" calcMode="ease-out" fill="freeze"/>'
+        +'<animate attributeName="y" from="'+chartH+'" to="'+y+'" dur="0.6s" calcMode="ease-out" fill="freeze"/>'
+        +'</rect>'
+        +'<text x="'+(x+barW/2)+'" y="'+(y-4)+'" font-size="9" font-weight="bold" fill="'+col+'" text-anchor="middle">'+v+'</text>'
+        +'<text x="'+(x+barW/2)+'" y="'+(chartH+14)+'" font-size="9" fill="#666" text-anchor="middle">'+labels[i]+'</text>';
+    }).join('')
+    +'</svg></div>';
+}
+
+
+// Add to initial load
+setTimeout(function(){ renderBlogPublic(); renderEgresadosPublic(); }, 600);
+
+// ================================================================
+//  📱 MOBILE NAV
+// ================================================================
+var _mobileNavOpen = false;
+
+function toggleMobileNav(){
+  _mobileNavOpen = !_mobileNavOpen;
+  var drawer = document.getElementById('mobile-nav-drawer');
+  var btn    = document.getElementById('nav-hamburger');
+  if(!drawer) return;
+  drawer.style.display = _mobileNavOpen ? 'block' : 'none';
+  if(btn) btn.textContent = _mobileNavOpen ? '✕' : '☰';
+  // Build mobile links from nav-links-dynamic
+  if(_mobileNavOpen) buildMobileNavLinks();
+}
+
+function buildMobileNavLinks(){
+  var linksEl = document.getElementById('mobile-nav-links');
+  if(!linksEl) return;
+  // Get all nav items from desktop nav
+  var desktopNav = document.getElementById('nav-links-dynamic');
+  if(!desktopNav){ linksEl.innerHTML=''; return; }
+  // Extract all buttons/links and rebuild as mobile items
+  var items = desktopNav.querySelectorAll('.nav-btn, .dropdown-menu a, a');
+  var seen = new Set();
+  var html = '';
+  items.forEach(function(el){
+    var text = el.textContent.trim();
+    var onclick = el.getAttribute('onclick')||'';
+    if(!text || seen.has(text) || el.classList.contains('dropdown-trigger')) return;
+    seen.add(text);
+    html += '<div class="mobile-nav-item" onclick="'+onclick.replace(/"/g,"'")+';toggleMobileNav()">'
+      +'<span class="mnav-icon">'+text.slice(0,2)+'</span>'
+      +'<span>'+text.slice(2).trim()+'</span>'
+      +'</div>';
+  });
+  linksEl.innerHTML = html || '<div class="mobile-nav-item">📱 Sin opciones</div>';
+}
+
+// Close drawer when clicking outside
+document.addEventListener('click', function(e){
+  if(!_mobileNavOpen) return;
+  var drawer = document.getElementById('mobile-nav-drawer');
+  var btn    = document.getElementById('nav-hamburger');
+  if(drawer && !drawer.contains(e.target) && btn && !btn.contains(e.target)){
+    _mobileNavOpen = false;
+    drawer.style.display = 'none';
+    if(btn) btn.textContent = '☰';
+  }
+});
+
+// Close drawer on page change
+var _spMobile = showPage;
+showPage = function(id){
+  _spMobile(id);
+  if(_mobileNavOpen){
+    _mobileNavOpen = false;
+    var drawer=document.getElementById('mobile-nav-drawer');
+    var btn=document.getElementById('nav-hamburger');
+    if(drawer) drawer.style.display='none';
+    if(btn) btn.textContent='☰';
+  }
+};
