@@ -180,6 +180,8 @@ function persistLoad(){
             if(!APP.accounts) APP.accounts = {};
             APP.accounts.enfermeria = {email:'enfermeriaoti@gmail.com',password:'ENFEROTI@2025',role:'enfermeria',name:'Enfermería'};
             console.log('✅ Datos sincronizados desde Firebase');
+            // Restaurar foto después de sync Firebase
+            setTimeout(function(){ if(APP.currentUser) restoreProfilePhotos(); }, 200);
             // Also update localStorage with fresh Firebase data
             try{ localStorage.setItem(STORE_KEY, JSON.stringify(merged)); }catch(e){}
             // Re-apply UI if user is already logged in
@@ -430,7 +432,13 @@ function loginAs(user){
   }
   // Reapply all saved configurations to the UI
   setTimeout(applyAllSavedConfig, 200);
-  setTimeout(restoreProfilePhotos, 300);
+  setTimeout(function(){
+    restoreProfilePhotos();
+    // Also fill all profile forms fresh
+    if(APP.currentUser){
+      if(APP.currentUser.role==='padre') fillPadrePerfil(APP.currentUser);
+    }
+  }, 400);
   setTimeout(updateNotifBadge, 350);
   // Categorías tab: SOLO visible para el admin
   setTimeout(function(){
@@ -1111,6 +1119,12 @@ function renderPadreData(user){
 function showPadreSection(id){
   document.querySelectorAll('#page-padre .padre-section').forEach(s=>s.classList.remove('active'));
   const sec=document.getElementById(id);if(sec)sec.classList.add('active');
+  // Actualizar datos automáticamente al navegar
+  if(APP.currentUser){
+    if(id==='padre-perfil'||id==='padre-inicio') fillPadrePerfil(APP.currentUser);
+    if(id==='padre-notas')    renderPadreNotas(APP.currentUser);
+    if(id==='padre-ausencias-view') renderPadreAusencias();
+  }
 }
 
 function renderAdminData(){renderAnnouncements();renderStudentTable();renderNotasTable();renderAusencias();renderInscripciones();renderReportes();renderMensajes();renderCustomSections();updateCounters();setTimeout(renderDashboardGraficas,300);}
