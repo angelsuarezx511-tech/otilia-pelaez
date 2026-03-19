@@ -59,6 +59,19 @@
 
 <!-- ===================== LOGIN ===================== -->
 <div id="login-screen">
+  <!-- Floating saved accounts button -->
+  <div id="saved-accounts-fab" style="display:none;position:absolute;top:16px;right:16px;z-index:10001;">
+    <button onclick="toggleSavedAccounts()" id="fab-accounts-btn"
+      style="background:rgba(255,255,255,0.12);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.25);color:white;border-radius:30px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:'Nunito',sans-serif;">
+      👤 Mis cuentas <span id="fab-count" style="background:var(--gold);color:var(--navy);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:800;"></span>
+    </button>
+    <!-- Dropdown panel -->
+    <div id="accounts-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:260px;background:rgba(15,28,58,0.97);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:12px;box-shadow:0 20px 60px rgba(0,0,0,0.5);z-index:10002;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:10px;letter-spacing:.5px;font-weight:700;text-transform:uppercase;">Tus cuentas guardadas</div>
+      <div id="saved-accounts-bar"></div>
+      <button onclick="clearSavedAccounts()" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:11px;cursor:pointer;margin-top:8px;text-decoration:underline;font-family:'Nunito',sans-serif;">Limpiar cuentas</button>
+    </div>
+  </div>
   <div class="login-card" style="max-width:380px;padding:28px 30px;">
     <div class="login-logo">
       <div class="login-emblem"><img src="imagenes/logo_otilia_pelaez.png" alt="Logo"></div>
@@ -67,8 +80,7 @@
     </div>
     <div id="login-form-wrap">
       <div id="login-alert" class="alert alert-error" style="display:none;"></div>
-      <!-- Saved account chips -->
-      <div id="saved-accounts-bar" style="display:none;margin-bottom:12px;"></div>
+      <!-- saved-accounts-bar moved outside -->
       <div class="form-group"><label>Correo Electrónico</label><input type="email" id="login-email" placeholder="tucorreo@gmail.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div class="form-group"><label>Contraseña</label>
         <div style="position:relative;">
@@ -937,7 +949,8 @@
       <button class="dash-tab" data-section="dash-destacados" onclick="showDashSection('dash-destacados',this);renderDestacadosAdmin()">🏅 Destacados</button>
       <button class="dash-tab" data-section="dash-estudiantes" onclick="showDashSection('dash-estudiantes',this)">🎓 Estudiantes</button>
       <button class="dash-tab" data-section="dash-notas" onclick="showDashSection('dash-notas',this)">📋 Notas</button>
-      <button class="dash-tab" data-section="dash-ausencias" onclick="showDashSection('dash-ausencias',this)">📅 Ausencias</button>
+      <button class="dash-tab" data-section="dash-asistencia" onclick="showDashSection('dash-asistencia',this);renderResumenAsistencia('')">📋 Asistencia</button>
+            <button class="dash-tab" data-section="dash-ausencias" onclick="showDashSection('dash-ausencias',this)">📅 Ausencias</button>
       <button class="dash-tab" data-section="dash-inscripciones" onclick="showDashSection('dash-inscripciones',this)">📝 Inscripciones</button>
       <button class="dash-tab" data-section="dash-reportes" onclick="showDashSection('dash-reportes',this)">📨 Reportes</button>
       <button class="dash-tab" data-section="dash-mensajes" onclick="showDashSection('dash-mensajes',this)">💬 Mensajes</button>
@@ -958,6 +971,7 @@
       <button class="dash-tab" data-section="dash-estadisticas" onclick="showDashSection('dash-estadisticas',this);renderEstadisticas()">📈 Estadísticas</button>
       <button class="dash-tab" data-section="dash-carnet" onclick="showDashSection('dash-carnet',this);renderCarnetAdmin()">🪪 Carnets</button>
       <button class="dash-tab" data-section="dash-minerd" onclick="showDashSection('dash-minerd',this);renderMinerd()">📡 MINERD</button>
+      <button class="dash-tab" data-section="dash-reportes-asist" onclick="showDashSection('dash-reportes-asist',this);renderReportesAsistAdmin()">📋 Asistencia</button>
       <button class="dash-tab" data-section="dash-blog" onclick="showDashSection('dash-blog',this);renderBlogAdmin()">📰 Blog</button>
       <button class="dash-tab" data-section="dash-egresados" onclick="showDashSection('dash-egresados',this);renderEgresadosAdmin()">🎓 Egresados</button>
       <button class="dash-tab" data-section="dash-maestros-admin" onclick="showDashSection('dash-maestros-admin',this);renderMaestrosAdmin()">👨‍🏫 Maestros</button>
@@ -1057,7 +1071,49 @@
     <!-- Modal agregar destacado -->
         <div id="dash-estudiantes" class="dash-section"><div class="panel"><h3>🎓 Estudiantes</h3><button class="action-btn" onclick="openModal('modal-student')">+ Agregar</button><table class="data-table"><thead><tr><th>Nombre</th><th>Grado</th><th>ID</th><th>Correo</th><th>Carrera</th><th>Acción</th></tr></thead><tbody id="admin-st-body"></tbody></table></div></div>
     <div id="dash-notas" class="dash-section"><div class="panel"><h3>📋 Notas</h3><button class="action-btn" onclick="openModal('modal-nota')">+ Agregar</button><table class="data-table"><thead><tr><th>Estudiante</th><th>Materia</th><th>Nota</th><th>Período</th><th>Acción</th></tr></thead><tbody id="admin-notas-body"></tbody></table></div></div>
-    <div id="dash-ausencias" class="dash-section"><div class="panel"><h3>📅 Ausencias</h3><div id="admin-ausencias-list"></div></div></div>
+    <!-- Asistencia section -->
+    <div id="dash-asistencia" class="dash-section">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+          <div><h3 style="margin:0;">📋 Control de Asistencia</h3>
+          <p style="color:#888;font-size:13px;margin:4px 0 0;">Registra presente, tarde o ausente por grado.</p></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <select id="asist-grado" style="padding:8px 14px;border:1px solid var(--border);border-radius:10px;font-size:13px;min-width:180px;">
+              <option value="">Todos los grados</option>
+              <optgroup label="Primaria">
+                <option>1° Primaria</option><option>2° Primaria</option><option>3° Primaria</option>
+                <option>4° Primaria</option><option>5° Primaria</option><option>6° Primaria</option>
+              </optgroup>
+              <optgroup label="Secundaria">
+                <option>1° Secundaria</option><option>2° Secundaria</option><option>3° Secundaria</option>
+                <option>4° Secundaria</option><option>5° Secundaria</option><option>6° Secundaria</option>
+              </optgroup>
+            </select>
+            <button class="btn btn-gold" onclick="tomarAsistenciaClase()">📋 Cargar Lista</button>
+          </div>
+        </div>
+        <div id="asist-resumen" style="margin-bottom:16px;"></div>
+        <div id="asist-lista-container">
+          <div style="text-align:center;padding:40px;color:#888;">
+            <div style="font-size:40px;margin-bottom:10px;">📋</div>
+            <p>Selecciona un grado y haz clic en Cargar Lista para tomar asistencia.</p>
+          </div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+          <h3 style="margin:0;">📊 Historial</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input type="date" id="asist-hist-fecha" onchange="renderHistorialAsistencia()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
+            <input type="text" id="asist-hist-search" placeholder="🔍 Buscar..." oninput="renderHistorialAsistencia()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;min-width:160px;">
+            <button class="btn btn-outline" onclick="exportAsistenciaCSV()" style="font-size:12px;">⬇ CSV</button>
+          </div>
+        </div>
+        <div id="asist-historial-table" style="overflow-x:auto;"></div>
+      </div>
+    </div>
+
+        <div id="dash-ausencias" class="dash-section"><div class="panel"><h3>📅 Ausencias</h3><div id="admin-ausencias-list"></div></div></div>
     <div id="dash-inscripciones" class="dash-section"><div class="panel"><h3>📝 Inscripciones</h3><div id="admin-inscripciones-list"></div></div></div>
     <div id="dash-reportes" class="dash-section"><div class="panel"><h3>📨 Reportes</h3><div id="admin-reportes-list"><p style="color:#888;padding:16px;">Sin reportes.</p></div></div></div>
     <div id="dash-mensajes" class="dash-section"><div class="panel"><h3>💬 Mensajes</h3><div id="admin-mensajes-list"><p style="color:#888;font-size:13px;">Sin mensajes.</p></div></div></div>
@@ -2322,6 +2378,24 @@
       </div>
     </div>
 
+    <!-- =================== REPORTES ASISTENCIA =================== -->
+    <div id="dash-reportes-asist" class="dash-section">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+          <div>
+            <h3 style="margin:0;">📋 Reportes de Asistencia</h3>
+            <p style="color:#888;font-size:13px;margin:4px 0 0;">Reportes enviados por los maestros. Haz clic para ver el detalle.</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="asist-admin-search" placeholder="🔍 Buscar grado o maestro..." oninput="renderReportesAsistAdmin()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;min-width:200px;">
+            <button class="btn btn-outline" onclick="exportAsistenciaCSV()" style="font-size:12px;">⬇ CSV</button>
+          </div>
+        </div>
+        <div id="admin-asist-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;"></div>
+        <div id="admin-reportes-asist-list"></div>
+      </div>
+    </div>
+
     <!-- =================== BLOG =================== -->
     <div id="dash-blog" class="dash-section">
       <div class="panel">
@@ -2525,7 +2599,87 @@
 
     <div id="profe-reglamento" class="dash-section"><div class="panel" id="profe-reg-content"></div></div>
     <div id="profe-records" class="dash-section"><div class="panel"><h3>📂 Récords</h3><table class="data-table"><thead><tr><th>Nombre</th><th>Grado</th><th>Promedio</th><th>Estado</th></tr></thead><tbody id="profe-records-body"></tbody></table></div></div>
-    <div id="profe-ausencias" class="dash-section"><div class="panel"><h3>📅 Ausencias</h3><div id="profe-ausencias-list"></div></div></div>
+    <div id="profe-ausencias" class="dash-section">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+          <div>
+            <h3 style="margin:0;">📅 Registro de Asistencia</h3>
+            <p style="color:#888;font-size:13px;margin:4px 0 0;">Toma lista y envía el reporte al administrador</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <input type="date" id="asist-fecha" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
+            <select id="asist-grado" onchange="cargarListaAsistencia()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
+              <option value="">Seleccionar grado...</option>
+            </select>
+            <button class="btn btn-gold" onclick="enviarReporteAsistencia()">📤 Enviar Reporte al Admin</button>
+          </div>
+        </div>
+
+        <!-- Resumen rápido -->
+        <div id="asist-resumen" style="display:none;margin-bottom:16px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;">
+            <div style="background:#dcfce7;border-radius:10px;padding:12px;text-align:center;">
+              <div style="font-size:22px;font-weight:900;color:#16a34a;" id="asist-presentes-count">0</div>
+              <div style="font-size:11px;color:#16a34a;font-weight:700;">✅ Presentes</div>
+            </div>
+            <div style="background:#fee2e2;border-radius:10px;padding:12px;text-align:center;">
+              <div style="font-size:22px;font-weight:900;color:#dc2626;" id="asist-ausentes-count">0</div>
+              <div style="font-size:11px;color:#dc2626;font-weight:700;">❌ Ausentes</div>
+            </div>
+            <div style="background:#fef3c7;border-radius:10px;padding:12px;text-align:center;">
+              <div style="font-size:22px;font-weight:900;color:#d97706;" id="asist-tardanza-count">0</div>
+              <div style="font-size:11px;color:#d97706;font-weight:700;">⏰ Tardanza</div>
+            </div>
+            <div style="background:#e0f2fe;border-radius:10px;padding:12px;text-align:center;">
+              <div style="font-size:22px;font-weight:900;color:#0f4c75;" id="asist-total-count">0</div>
+              <div style="font-size:11px;color:#0f4c75;font-weight:700;">👥 Total</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones rápidas -->
+        <div id="asist-acciones" style="display:none;margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="marcarTodos('presente')" class="btn" style="background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;font-size:12px;">✅ Todos presentes</button>
+          <button onclick="marcarTodos('ausente')"  class="btn" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;font-size:12px;">❌ Todos ausentes</button>
+          <button onclick="marcarTodos('presente'); luegoBorrar=true" style="display:none;"></button>
+        </div>
+
+        <!-- Lista de estudiantes -->
+        <div id="asist-lista-wrap" style="display:none;">
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead>
+                <tr style="background:var(--navy);color:white;">
+                  <th style="padding:10px 14px;text-align:left;border-radius:8px 0 0 0;">#</th>
+                  <th style="padding:10px 14px;text-align:left;">Estudiante</th>
+                  <th style="padding:10px 14px;text-align:center;">✅ Presente</th>
+                  <th style="padding:10px 14px;text-align:center;">❌ Ausente</th>
+                  <th style="padding:10px 14px;text-align:center;">⏰ Tardanza</th>
+                  <th style="padding:10px 14px;text-align:left;border-radius:0 8px 0 0;">Observación</th>
+                </tr>
+              </thead>
+              <tbody id="asist-tabla-body"></tbody>
+            </table>
+          </div>
+          <div style="text-align:right;margin-top:16px;">
+            <button class="btn btn-gold" style="padding:10px 24px;font-size:14px;" onclick="enviarReporteAsistencia()">
+              📤 Enviar Reporte al Administrador
+            </button>
+          </div>
+        </div>
+
+        <div id="asist-empty" style="text-align:center;padding:40px;color:#888;">
+          <div style="font-size:40px;margin-bottom:10px;">📋</div>
+          <p>Selecciona una fecha y un grado para tomar la lista</p>
+        </div>
+
+        <!-- Historial de reportes enviados -->
+        <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">
+          <h4 style="font-weight:700;color:var(--navy);margin-bottom:12px;font-size:14px;">📨 Reportes enviados</h4>
+          <div id="asist-historial"></div>
+        </div>
+      </div>
+    </div>
     <div id="profe-anuncios" class="dash-section">
       <div class="panel">
         <h3>📢 Publicar Anuncio</h3>
