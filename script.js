@@ -2569,22 +2569,51 @@ function saveSession(user){
 function loadRememberedAccounts(){
   try{
     var sessions=JSON.parse(localStorage.getItem('otiSessions')||'{}');
-    var keys=Object.keys(sessions);if(!keys.length)return;
-    var bar=document.getElementById('saved-accounts-bar');if(!bar)return;
-    bar.style.display='block';
-    bar.innerHTML='<p style="font-size:11px;color:rgba(255,255,255,0.6);margin:0 0 6px;">Cuentas guardadas:</p>'+
-      keys.map(function(k){
+    var keys=Object.keys(sessions);
+    var fab=document.getElementById('saved-accounts-fab');
+    var bar=document.getElementById('saved-accounts-bar');
+    var countEl=document.getElementById('fab-count');
+    if(!keys.length){ if(fab) fab.style.display='none'; return; }
+    // Show FAB button
+    if(fab) fab.style.display='block';
+    if(countEl) countEl.textContent=keys.length;
+    // Build account list
+    if(bar){
+      var roleEmoji={admin:'⚙️',profesor:'👨‍🏫',estudiante:'🎓',padre:'👪',enfermeria:'🏥'};
+      var roleLabel={admin:'Admin',profesor:'Maestro/a',estudiante:'Estudiante',padre:'Padre/Tutor',enfermeria:'Enfermería'};
+      bar.innerHTML=keys.map(function(k){
         var s=sessions[k];
-        var roleEmoji={admin:'⚙️',profesor:'👨‍🏫',estudiante:'🎓',padre:'👪'}[s.role]||'👤';
-        return '<button onclick="quickLogin(\''+k+'\')" style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:8px 12px;cursor:pointer;margin-bottom:6px;color:white;font-family:\'Nunito\',sans-serif;font-size:13px;">'+
-          '<span style="font-size:18px;">'+roleEmoji+'</span>'+
-          '<div><strong>'+s.name+'</strong><br><small style="opacity:0.7;">'+s.email+'</small></div>'+
-          '<span style="margin-left:auto;background:var(--gold);color:var(--navy);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;">Entrar →</span>'+
-        '</button>';
-      }).join('')+
-      '<button onclick="clearSavedAccounts()" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:11px;cursor:pointer;text-decoration:underline;margin-top:2px;">Limpiar cuentas guardadas</button>';
+        var ico=roleEmoji[s.role]||'👤';
+        var lbl=roleLabel[s.role]||s.role;
+        var initials=(s.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+        var btn=document.createElement('button');
+        btn.style.cssText='display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px 12px;cursor:pointer;margin-bottom:8px;color:white;font-family:Nunito,sans-serif;transition:background .15s;';
+        btn.onmouseover=function(){this.style.background='rgba(212,175,55,0.15)';};
+        btn.onmouseout=function(){this.style.background='rgba(255,255,255,0.06)';};
+        btn.onclick=function(){quickLogin(k);};
+        btn.innerHTML='<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0f1c3a,#1a3a6e);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#d4af37;flex-shrink:0;border:2px solid rgba(212,175,55,0.3);">'+initials+'</div>'
+          +'<div style="flex:1;min-width:0;"><div style="font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+s.name+'</div><div style="font-size:11px;color:rgba(255,255,255,0.45);">'+ico+' '+lbl+'</div></div>'
+          +'<span style="background:#d4af37;color:#0f1c3a;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;flex-shrink:0;">Entrar</span>';
+        return btn.outerHTML;
+      }).join('');
+    }
   }catch(e){}
 }
+
+function toggleSavedAccounts(){
+  var dd=document.getElementById('accounts-dropdown');
+  if(!dd) return;
+  dd.style.display = dd.style.display==='none' ? 'block' : 'none';
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click',function(e){
+  var fab=document.getElementById('saved-accounts-fab');
+  var dd=document.getElementById('accounts-dropdown');
+  if(dd && dd.style.display==='block' && fab && !fab.contains(e.target)){
+    dd.style.display='none';
+  }
+});
 
 function quickLogin(email){
   try{
@@ -2600,8 +2629,9 @@ function quickLogin(email){
 
 function clearSavedAccounts(){
   localStorage.removeItem('otiSessions');
-  var bar=document.getElementById('saved-accounts-bar');if(bar)bar.style.display='none';
-  toast('Cuentas guardadas eliminadas','info');
+  var fab=document.getElementById('saved-accounts-fab');if(fab)fab.style.display='none';
+  var dd=document.getElementById('accounts-dropdown');if(dd)dd.style.display='none';
+  toast('Cuentas eliminadas','info');
 }
 
 function togglePassVis(inputId,btn){
@@ -8373,3 +8403,78 @@ function getHistorialAsistencia(studentId){
     .filter(function(a){ return a.studentId===studentId; })
     .sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
 }
+
+// ── Historial de asistencia ────────────────────────────────────────
+function renderHistorialAsistencia(){
+  var el = document.getElementById('asist-historial-table');
+  if(!el) return;
+  var filtFecha  = (document.getElementById('asist-hist-fecha') ||{}).value||'';
+  var filtSearch = ((document.getElementById('asist-hist-search')||{}).value||'').toLowerCase();
+  var datos = (APP.asistencia||[]).filter(function(a){
+    var st = (APP.students||[]).find(function(s){ return s.id===a.studentId; });
+    var nombre = st ? (st.nombre+' '+st.apellido).toLowerCase() : '';
+    return (!filtFecha || a.fecha===filtFecha) && (!filtSearch || nombre.includes(filtSearch));
+  }).sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+
+  if(!datos.length){
+    el.innerHTML='<p style="color:#888;padding:20px;text-align:center;">Sin registros con esos filtros.</p>';
+    return;
+  }
+
+  var colors = {presente:'#16a34a',tarde:'#d97706',ausente:'#dc2626'};
+  var bgs    = {presente:'#dcfce7',tarde:'#fef3c7',ausente:'#fee2e2'};
+  var labels = {presente:'✅ Presente',tarde:'⏰ Tarde',ausente:'❌ Ausente'};
+
+  el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+    +'<thead><tr style="background:var(--navy);color:white;">'
+    +'<th style="padding:9px 12px;text-align:left;">Estudiante</th>'
+    +'<th style="padding:9px 12px;">Grado</th>'
+    +'<th style="padding:9px 12px;">Fecha</th>'
+    +'<th style="padding:9px 12px;">Hora</th>'
+    +'<th style="padding:9px 12px;text-align:center;">Estado</th>'
+    +'<th style="padding:9px 12px;">Nota</th>'
+    +'<th style="padding:9px 12px;">Registrado por</th>'
+    +'</tr></thead><tbody>'
+    + datos.map(function(a){
+        var st=(APP.students||[]).find(function(s){return s.id===a.studentId;});
+        var col=colors[a.tipo]||'#888';
+        var bg=bgs[a.tipo]||'#f5f5f5';
+        var lbl=labels[a.tipo]||a.tipo;
+        return '<tr style="border-bottom:1px solid var(--border);">'
+          +'<td style="padding:9px 12px;font-weight:600;">'+(st?st.nombre+' '+st.apellido:a.studentId)+'</td>'
+          +'<td style="padding:9px 12px;color:#888;">'+(st?st.grado:'—')+'</td>'
+          +'<td style="padding:9px 12px;">'+a.fecha+'</td>'
+          +'<td style="padding:9px 12px;color:#888;">'+a.hora+'</td>'
+          +'<td style="padding:9px 12px;text-align:center;">'
+          +'<span style="background:'+bg+';color:'+col+';padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">'+lbl+'</span>'
+          +'</td>'
+          +'<td style="padding:9px 12px;color:#666;font-size:12px;">'+(a.nota||'—')+'</td>'
+          +'<td style="padding:9px 12px;color:#888;font-size:12px;">'+(a.by||'—')+'</td>'
+          +'</tr>';
+      }).join('')
+    +'</tbody></table>';
+}
+
+function exportAsistenciaCSV(){
+  var rows=[['Estudiante','Grado','Fecha','Hora','Estado','Nota','Por']];
+  (APP.asistencia||[]).forEach(function(a){
+    var st=(APP.students||[]).find(function(s){return s.id===a.studentId;});
+    rows.push([
+      st?st.nombre+' '+st.apellido:a.studentId,
+      st?st.grado:'',
+      a.fecha, a.hora, a.tipo, a.nota||'', a.by||''
+    ]);
+  });
+  var csv=rows.map(function(r){return r.map(function(c){return '"'+c+'"';}).join(',');}).join('\n');
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='asistencia_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+}
+
+// Hook showDashSection to render historial when opening asistencia
+var _origShowDash2 = showDashSection;
+showDashSection = function(id, el){
+  _origShowDash2(id, el);
+  if(id==='dash-asistencia') setTimeout(renderHistorialAsistencia, 100);
+};
