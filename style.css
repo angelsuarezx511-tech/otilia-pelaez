@@ -1594,33 +1594,3 @@ html, body {
 @media (max-width: 768px) {
   #navbar-separator { display: none !important; }
 }
-
-/* ═══════════════════════════════════════════
-   BARRA BLANCA BAJO NAVBAR — solo PC/tablet
-═══════════════════════════════════════════ */
-@media (min-width: 769px) {
-  /* Barra blanca visible debajo del navbar */
-  #navbar-whitebar {
-    display: block !important;
-    position: fixed;
-    top: 64px;
-    left: 0; right: 0;
-    height: 40px;
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
-    z-index: 9998;
-    pointer-events: none;
-  }
-  /* Dropdown aparece encima de la barra blanca */
-  .dropdown-menu { z-index: 99999 !important; }
-  /* Páginas empiezan después de navbar + barra */
-  .page { padding-top: 104px !important; }
-  #page-home { padding-top: 0 !important; }
-}
-
-/* Celular — ocultar barra blanca */
-@media (max-width: 768px) {
-  #navbar-whitebar { display: none !important; }
-  .page { padding-top: 56px !important; }
-  #page-home { padding-top: 0 !important; }
-}
