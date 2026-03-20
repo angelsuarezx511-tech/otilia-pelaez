@@ -710,11 +710,11 @@ function buildNavbar(role){
           'position:fixed',
           'top:' + (rect.bottom + 4) + 'px',
           'left:' + rect.left + 'px',
-          'min-width:220px',
-          'background:#0d1f3e',
-          'border:1px solid rgba(212,175,55,0.4)',
+          'min-width:230px',
+          'background:white',
+          'border:2px solid #d4af37',
           'border-radius:12px',
-          'box-shadow:0 20px 60px rgba(0,0,0,0.9)',
+          'box-shadow:0 8px 40px rgba(0,0,0,0.35)',
           'z-index:999999',
           'overflow:hidden',
           'padding:6px 0',
@@ -724,18 +724,18 @@ function buildNavbar(role){
         menu.querySelectorAll('a').forEach(function(a){
           a.style.cssText = [
             'display:block',
-            'padding:11px 20px',
-            'color:rgba(255,255,255,0.9)',
+            'padding:12px 20px',
+            'color:#0f1c3a',
             'font-size:13px',
             'font-weight:700',
             'text-decoration:none',
             'cursor:pointer',
-            'border-bottom:1px solid rgba(255,255,255,0.07)',
-            'transition:background .15s,padding .15s',
-            'white-space:nowrap'
+            'border-bottom:1px solid #f0f0f0',
+            'white-space:nowrap',
+            'background:white'
           ].join(';');
-          a.onmouseover = function(){ this.style.background='rgba(212,175,55,0.2)'; this.style.color='#d4af37'; this.style.paddingLeft='26px'; };
-          a.onmouseout  = function(){ this.style.background=''; this.style.color='rgba(255,255,255,0.9)'; this.style.paddingLeft='20px'; };
+          a.onmouseover = function(){ this.style.background='#fef9e7'; this.style.color='#b8963e'; this.style.paddingLeft='26px'; };
+          a.onmouseout  = function(){ this.style.background='white'; this.style.color='#0f1c3a'; this.style.paddingLeft='20px'; };
         });
         // Fix right overflow
         var mRect = menu.getBoundingClientRect();
