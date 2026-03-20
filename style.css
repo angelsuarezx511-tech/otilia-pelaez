@@ -37,7 +37,7 @@ body{font-family:'Nunito',sans-serif;background:var(--off-white);color:var(--tex
 .alert-success{background:#D4EDDA;color:#155724;border:1px solid #C3E6CB;}
 
 /* NAVBAR */
-#navbar{position:fixed;top:0;left:0;right:0;z-index:1000;background:linear-gradient(135deg,var(--navy) 0%,var(--blue) 100%);border-bottom:3px solid var(--gold);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:64px;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
+#navbar{position:fixed;top:0;left:0;right:0;z-index:1000;background:linear-gradient(135deg,var(--navy) 0%,var(--blue) 100%);border-bottom:3px solid var(--gold);display:flex;align-items:center;gap:8px;padding:0 16px;height:64px;box-shadow:0 4px 20px rgba(0,0,0,0.4);overflow:visible;}
 .nav-logo{display:flex;align-items:center;gap:10px;cursor:pointer;}
 /* Logo imagen en navbar — tamaño controlado */
 .nav-logo-img{
@@ -316,7 +316,7 @@ body{font-family:'Nunito',sans-serif;background:var(--off-white);color:var(--tex
 /* ================================================
    NAVBAR DROPDOWNS
 ================================================ */
-.nav-dropdown{position:relative;display:inline-block;}
+.nav-dropdown{position:relative;display:inline-block;overflow:visible;}
 .nav-drop-btn{color:var(--white);padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;background:none;border:none;transition:all 0.2s;white-space:nowrap;}
 .nav-drop-btn:hover{background:rgba(245,197,24,0.2);color:var(--gold-light);}
 .nav-drop-menu{display:none;position:absolute;top:38px;left:0;background:var(--navy);border:1px solid rgba(255,255,255,0.15);border-radius:10px;min-width:200px;z-index:2000;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,0.4);}
@@ -378,7 +378,7 @@ body{font-family:'Nunito',sans-serif;background:var(--off-white);color:var(--tex
    NAVBAR DROPDOWNS — estilo UNICARIBE
 ================================================ */
 .nav-links-row{display:flex;gap:2px;align-items:center;flex-wrap:nowrap;flex:1;}
-.nav-dropdown{position:relative;}
+.nav-dropdown{position:relative;overflow:visible;}
 .nav-btn{background:none;border:none;color:var(--white);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;padding:8px 13px;border-radius:6px;cursor:pointer;transition:all 0.2s;white-space:nowrap;display:flex;align-items:center;gap:4px;}
 .nav-btn:hover{background:rgba(245,197,24,0.2);color:var(--gold-light);}
 .dropdown-menu{
@@ -388,8 +388,8 @@ body{font-family:'Nunito',sans-serif;background:var(--off-white);color:var(--tex
   border-radius:10px;
   box-shadow:0 12px 40px rgba(0,0,0,0.5);
   border:1px solid rgba(245,197,24,0.2);
-  z-index:2000;
-  overflow:hidden;
+  z-index:9500;
+  overflow:visible;
   display:none;
   animation:fadeDown 0.15s ease;
 }
@@ -1533,7 +1533,6 @@ html, body {
 }
 
 /* ── No extra space from nav wrapping ── */
-#navbar { flex-wrap: nowrap; overflow: visible; }
 #nav-links-dynamic { flex-wrap: nowrap; overflow: visible; flex: 1; }
 .nav-links-row { flex-wrap: nowrap !important; }
 .nav-dropdown { flex-shrink: 0; }
@@ -1553,3 +1552,25 @@ html, body {
 }
 #accounts-dropdown { animation: dropIn .15s ease; }
 @keyframes dropIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── Mis cuentas FAB — más pequeño en móvil ── */
+@media (max-width: 768px) {
+  #saved-accounts-fab {
+    top: 8px !important;
+    right: 8px !important;
+  }
+  #saved-accounts-fab button {
+    padding: 5px 10px !important;
+    font-size: 10px !important;
+    border-radius: 20px !important;
+    gap: 4px !important;
+  }
+  #fab-count {
+    font-size: 9px !important;
+    padding: 1px 5px !important;
+  }
+  #accounts-dropdown {
+    min-width: 220px !important;
+    right: 0 !important;
+  }
+}
