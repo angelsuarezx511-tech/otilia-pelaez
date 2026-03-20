@@ -550,14 +550,17 @@ function buildNavbar(role){
         <button class="nav-btn" onclick="showPage('home')">🏠 Inicio</button>
       </div>
       <div class="nav-dropdown">
+        <button class="nav-btn" onclick="goToPortal()">⚙️ Panel Admin</button>
+      </div>
+      <div class="nav-dropdown">
         <button class="nav-btn dropdown-trigger">🏫 Centro ▾</button>
         <div class="dropdown-menu">
           <a onclick="showPage('about')">📚 Sobre Nosotros</a>
           <a onclick="showPage('anuncios')">📢 Anuncios</a>
-          <a onclick="showPage('pagos-public')">💰 Tarifas y Pagos</a>
+          <a onclick="showPage('pagos-public')">💰 Tarifas</a>
           <a onclick="showPage('reglamento-public')">📜 Reglamento</a>
-          <a onclick="showAdminSection('dash-config')">⚙️ Configuración</a>
-          <a onclick="showAdminSection('dash-custom')">➕ Secciones Web</a>
+          <a onclick="showPage('blog')">📰 Blog</a>
+          <a onclick="showPage('egresados')">🎓 Egresados</a>
         </div>
       </div>
       <div class="nav-dropdown">
@@ -567,6 +570,8 @@ function buildNavbar(role){
           <a onclick="showAdminSection('dash-inscripciones')">📝 Inscripciones</a>
           <a onclick="showAdminSection('dash-ausencias')">📅 Ausencias</a>
           <a onclick="showAdminSection('dash-notas')">📋 Notas</a>
+          <a onclick="showAdminSection('dash-pagos')">💰 Pagos</a>
+          <a onclick="showAdminSection('dash-enfermeria')">🏥 Enfermería</a>
         </div>
       </div>
       <div class="nav-dropdown">
