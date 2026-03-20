@@ -55,23 +55,15 @@ function initDropdowns(){
   // Nothing needed — we use document-level delegation below
 }
 
-// Single document listener — works even after DOM rebuild
+// Dropdown close on outside click
 document.addEventListener('click', function(e){
-  var trigger = e.target.closest('.dropdown-trigger');
-  if(trigger){
-    e.stopPropagation();
-    e.preventDefault();
-    _openDropMenu(trigger);
-    return;
-  }
-  // Click outside — close all
-  if(!e.target.closest('.dropdown-menu')){
+  if(!e.target.closest('.dropdown-menu') && !e.target.closest('.dropdown-trigger')){
     document.querySelectorAll('.dropdown-menu[data-open="1"]').forEach(function(m){
       m.setAttribute('data-open','0');
       m.style.display='none';
     });
   }
-}, true); // useCapture=true so it fires before stopPropagation
+});
 
 // ── Seguridad de login ─────────────────────────────────────────────
 var _loginAttempts = {};
@@ -763,8 +755,14 @@ function buildNavbar(role){
       </div>`;
   }
   nl.innerHTML=html;
-  // Dropdown events handled by global delegation (see initDropdowns)
-  initDropdowns();
+  // Attach onclick directly to each trigger button
+  nl.querySelectorAll('.dropdown-trigger').forEach(function(btn){
+    btn.onclick = function(e){
+      e.stopPropagation();
+      e.preventDefault();
+      _openDropMenu(this);
+    };
+  });
   document.removeEventListener('click', window._dropdownClose);
   window._dropdownClose = function(e){
     if(!e.target.closest('.nav-dropdown') && !e.target.closest('.dropdown-menu')){
