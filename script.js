@@ -1,3 +1,78 @@
+// ================================================================
+// DROPDOWN GLOBAL — event delegation, survives DOM rebuilds
+// ================================================================
+function _openDropMenu(btn){
+  var parent = btn.closest('.nav-dropdown') || btn.parentElement;
+  var menu   = parent ? parent.querySelector('.dropdown-menu') : null;
+  if(!menu) return;
+  var isOpen = menu.getAttribute('data-open') === '1';
+  // Close all
+  document.querySelectorAll('.dropdown-menu[data-open="1"]').forEach(function(m){
+    m.setAttribute('data-open','0');
+    m.style.display='none';
+  });
+  if(!isOpen){
+    var rect = btn.getBoundingClientRect();
+    menu.setAttribute('data-open','1');
+    menu.style.display    = 'block';
+    menu.style.position   = 'fixed';
+    menu.style.top        = (rect.bottom + 6) + 'px';
+    menu.style.left       = rect.left + 'px';
+    menu.style.minWidth   = '230px';
+    menu.style.background = '#ffffff';
+    menu.style.border     = '2px solid #d4af37';
+    menu.style.borderRadius = '12px';
+    menu.style.boxShadow  = '0 12px 40px rgba(0,0,0,0.3)';
+    menu.style.zIndex     = '999999';
+    menu.style.overflow   = 'hidden';
+    menu.style.padding    = '4px 0';
+    menu.style.fontFamily = 'Nunito,sans-serif';
+    // Style links
+    menu.querySelectorAll('a').forEach(function(a){
+      a.style.display      = 'block';
+      a.style.padding      = '11px 20px';
+      a.style.color        = '#0f1c3a';
+      a.style.fontWeight   = '700';
+      a.style.fontSize     = '13px';
+      a.style.textDecoration = 'none';
+      a.style.cursor       = 'pointer';
+      a.style.borderBottom = '1px solid #f0f0f0';
+      a.style.background   = 'white';
+      a.style.whiteSpace   = 'nowrap';
+      a.onmouseover = function(){ this.style.background='#fef9e7'; this.style.color='#b8963e'; };
+      a.onmouseout  = function(){ this.style.background='white';   this.style.color='#0f1c3a'; };
+    });
+    // Prevent going off-screen
+    setTimeout(function(){
+      var mr = menu.getBoundingClientRect();
+      if(mr.right > window.innerWidth - 8)
+        menu.style.left = (window.innerWidth - mr.width - 8)+'px';
+    },0);
+  }
+}
+
+function initDropdowns(){
+  // Nothing needed — we use document-level delegation below
+}
+
+// Single document listener — works even after DOM rebuild
+document.addEventListener('click', function(e){
+  var trigger = e.target.closest('.dropdown-trigger');
+  if(trigger){
+    e.stopPropagation();
+    e.preventDefault();
+    _openDropMenu(trigger);
+    return;
+  }
+  // Click outside — close all
+  if(!e.target.closest('.dropdown-menu')){
+    document.querySelectorAll('.dropdown-menu[data-open="1"]').forEach(function(m){
+      m.setAttribute('data-open','0');
+      m.style.display='none';
+    });
+  }
+}, true); // useCapture=true so it fires before stopPropagation
+
 // ── Seguridad de login ─────────────────────────────────────────────
 var _loginAttempts = {};
 var _MAX_ATTEMPTS  = 5;
@@ -688,63 +763,8 @@ function buildNavbar(role){
       </div>`;
   }
   nl.innerHTML=html;
-  // Re-attach dropdown events
-  document.querySelectorAll('.dropdown-trigger').forEach(function(btn){
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();
-      e.preventDefault();
-      var parent = this.closest('.nav-dropdown') || this.parentElement;
-      var menu = parent ? parent.querySelector('.dropdown-menu') : null;
-      if(!menu) return;
-      var isOpen = menu.style.display === 'block';
-      // Close all
-      document.querySelectorAll('.dropdown-menu').forEach(function(m){
-        m.style.display = 'none';
-        m.style.top = ''; m.style.left = '';
-      });
-      if(!isOpen){
-        var rect = this.getBoundingClientRect();
-        // Apply ALL styles inline — no dependency on external CSS
-        menu.style.cssText = [
-          'display:block',
-          'position:fixed',
-          'top:' + (rect.bottom + 4) + 'px',
-          'left:' + rect.left + 'px',
-          'min-width:230px',
-          'background:white',
-          'border:2px solid #d4af37',
-          'border-radius:12px',
-          'box-shadow:0 8px 40px rgba(0,0,0,0.35)',
-          'z-index:999999',
-          'overflow:hidden',
-          'padding:6px 0',
-          'font-family:Nunito,sans-serif'
-        ].join(';');
-        // Style all links inside
-        menu.querySelectorAll('a').forEach(function(a){
-          a.style.cssText = [
-            'display:block',
-            'padding:12px 20px',
-            'color:#0f1c3a',
-            'font-size:13px',
-            'font-weight:700',
-            'text-decoration:none',
-            'cursor:pointer',
-            'border-bottom:1px solid #f0f0f0',
-            'white-space:nowrap',
-            'background:white'
-          ].join(';');
-          a.onmouseover = function(){ this.style.background='#fef9e7'; this.style.color='#b8963e'; this.style.paddingLeft='26px'; };
-          a.onmouseout  = function(){ this.style.background='white'; this.style.color='#0f1c3a'; this.style.paddingLeft='20px'; };
-        });
-        // Fix right overflow
-        var mRect = menu.getBoundingClientRect();
-        if(mRect.right > window.innerWidth - 8){
-          menu.style.left = (window.innerWidth - mRect.width - 8) + 'px';
-        }
-      }
-    });
-  });
+  // Dropdown events handled by global delegation (see initDropdowns)
+  initDropdowns();
   document.removeEventListener('click', window._dropdownClose);
   window._dropdownClose = function(e){
     if(!e.target.closest('.nav-dropdown') && !e.target.closest('.dropdown-menu')){
