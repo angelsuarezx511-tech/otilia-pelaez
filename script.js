@@ -2591,15 +2591,11 @@ function loadRememberedAccounts(){
         var ico=roleEmoji[s.role]||'👤';
         var lbl=roleLabel[s.role]||s.role;
         var initials=(s.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-        var btn=document.createElement('button');
-        btn.style.cssText='display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px 12px;cursor:pointer;margin-bottom:8px;color:white;font-family:Nunito,sans-serif;transition:background .15s;';
-        btn.onmouseover=function(){this.style.background='rgba(212,175,55,0.15)';};
-        btn.onmouseout=function(){this.style.background='rgba(255,255,255,0.06)';};
-        btn.onclick=function(){quickLogin(k);};
-        btn.innerHTML='<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0f1c3a,#1a3a6e);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#d4af37;flex-shrink:0;border:2px solid rgba(212,175,55,0.3);">'+initials+'</div>'
+        return '<button data-qemail="'+k+'" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px 12px;cursor:pointer;margin-bottom:8px;color:white;font-family:Nunito,sans-serif;">'
+          +'<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0f1c3a,#1a3a6e);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#d4af37;flex-shrink:0;border:2px solid rgba(212,175,55,0.3);">'+initials+'</div>'
           +'<div style="flex:1;min-width:0;"><div style="font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+s.name+'</div><div style="font-size:11px;color:rgba(255,255,255,0.45);">'+ico+' '+lbl+'</div></div>'
-          +'<span style="background:#d4af37;color:#0f1c3a;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;flex-shrink:0;">Entrar</span>';
-        return btn.outerHTML;
+          +'<span style="background:#d4af37;color:#0f1c3a;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;flex-shrink:0;">Entrar →</span>'
+          +'</button>';
       }).join('');
     }
   }catch(e){}
@@ -2610,6 +2606,16 @@ function toggleSavedAccounts(){
   if(!dd) return;
   dd.style.display = dd.style.display==='none' ? 'block' : 'none';
 }
+
+// Event delegation for quick login buttons
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('[data-qemail]');
+  if(btn){
+    e.stopPropagation();
+    var email = btn.getAttribute('data-qemail');
+    if(email) quickLogin(email);
+  }
+});
 
 // Close dropdown when clicking outside
 document.addEventListener('click',function(e){
