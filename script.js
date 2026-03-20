@@ -688,7 +688,7 @@ function buildNavbar(role){
       </div>`;
   }
   nl.innerHTML=html;
-  // Re-attach dropdown events — position:fixed so it renders above everything
+  // Re-attach dropdown events
   document.querySelectorAll('.dropdown-trigger').forEach(function(btn){
     btn.addEventListener('click',function(e){
       e.stopPropagation();
@@ -696,21 +696,50 @@ function buildNavbar(role){
       var parent = this.closest('.nav-dropdown') || this.parentElement;
       var menu = parent ? parent.querySelector('.dropdown-menu') : null;
       if(!menu) return;
-      var isOpen = menu.classList.contains('open');
-      // Close all others
-      document.querySelectorAll('.dropdown-menu.open').forEach(function(m){
-        m.classList.remove('open');
-        m.style.top=''; m.style.left='';
+      var isOpen = menu.style.display === 'block';
+      // Close all
+      document.querySelectorAll('.dropdown-menu').forEach(function(m){
+        m.style.display = 'none';
+        m.style.top = ''; m.style.left = '';
       });
       if(!isOpen){
-        // Position using fixed coords from button rect
         var rect = this.getBoundingClientRect();
-        menu.style.top  = (rect.bottom + 4) + 'px';
-        menu.style.left = rect.left + 'px';
-        // Make sure it doesn't go off screen right
-        menu.classList.add('open');
+        // Apply ALL styles inline — no dependency on external CSS
+        menu.style.cssText = [
+          'display:block',
+          'position:fixed',
+          'top:' + (rect.bottom + 4) + 'px',
+          'left:' + rect.left + 'px',
+          'min-width:220px',
+          'background:#0d1f3e',
+          'border:1px solid rgba(212,175,55,0.4)',
+          'border-radius:12px',
+          'box-shadow:0 20px 60px rgba(0,0,0,0.9)',
+          'z-index:999999',
+          'overflow:hidden',
+          'padding:6px 0',
+          'font-family:Nunito,sans-serif'
+        ].join(';');
+        // Style all links inside
+        menu.querySelectorAll('a').forEach(function(a){
+          a.style.cssText = [
+            'display:block',
+            'padding:11px 20px',
+            'color:rgba(255,255,255,0.9)',
+            'font-size:13px',
+            'font-weight:700',
+            'text-decoration:none',
+            'cursor:pointer',
+            'border-bottom:1px solid rgba(255,255,255,0.07)',
+            'transition:background .15s,padding .15s',
+            'white-space:nowrap'
+          ].join(';');
+          a.onmouseover = function(){ this.style.background='rgba(212,175,55,0.2)'; this.style.color='#d4af37'; this.style.paddingLeft='26px'; };
+          a.onmouseout  = function(){ this.style.background=''; this.style.color='rgba(255,255,255,0.9)'; this.style.paddingLeft='20px'; };
+        });
+        // Fix right overflow
         var mRect = menu.getBoundingClientRect();
-        if(mRect.right > window.innerWidth){
+        if(mRect.right > window.innerWidth - 8){
           menu.style.left = (window.innerWidth - mRect.width - 8) + 'px';
         }
       }
@@ -719,9 +748,8 @@ function buildNavbar(role){
   document.removeEventListener('click', window._dropdownClose);
   window._dropdownClose = function(e){
     if(!e.target.closest('.nav-dropdown') && !e.target.closest('.dropdown-menu')){
-      document.querySelectorAll('.dropdown-menu.open').forEach(function(m){
-        m.classList.remove('open');
-        m.style.top=''; m.style.left='';
+      document.querySelectorAll('.dropdown-menu').forEach(function(m){
+        m.style.display='none'; m.style.top=''; m.style.left='';
       });
     }
   };
