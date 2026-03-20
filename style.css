@@ -382,17 +382,17 @@ body{font-family:'Nunito',sans-serif;background:var(--off-white);color:var(--tex
 .nav-btn{background:none;border:none;color:var(--white);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;padding:8px 13px;border-radius:6px;cursor:pointer;transition:all 0.2s;white-space:nowrap;display:flex;align-items:center;gap:4px;}
 .nav-btn:hover{background:rgba(245,197,24,0.2);color:var(--gold-light);}
 .dropdown-menu{
-  position:absolute;top:calc(100% + 6px);left:0;
+  position:fixed !important;
   min-width:220px;
-  background:linear-gradient(135deg,#1a2a50,#0d1f3e);
+  background:#0d1f3e;
   border-radius:10px;
-  box-shadow:0 12px 40px rgba(0,0,0,0.5);
-  border:1px solid rgba(245,197,24,0.2);
-  z-index:9500;
+  box-shadow:0 20px 60px rgba(0,0,0,0.8);
+  border:1px solid rgba(245,197,24,0.3);
+  z-index:99999 !important;
   overflow:visible;
   display:none;
-  animation:fadeDown 0.15s ease;
 }
+.dropdown-menu.open{display:block;}
 .dropdown-menu.open{display:block;}
 @keyframes fadeDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
 .dropdown-menu a{
