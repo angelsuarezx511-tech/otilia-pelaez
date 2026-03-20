@@ -610,7 +610,65 @@ function goToPortal(){
 function buildNavbar(role){
   const nl=document.getElementById('nav-links-dynamic');
   if(!nl)return;
-  let html='';
+  // Simple flat buttons — no dropdowns
+  var navs = {
+    admin: [
+      ["🏠 Inicio",          "showPage('home')"],
+      ["⚙️ Panel",           "goToPortal()"],
+      ["📚 Nosotros",        "showPage('about')"],
+      ["📢 Anuncios",        "showPage('anuncios')"],
+      ["📰 Blog",            "showPage('blog')"],
+      ["🎓 Egresados",       "showPage('egresados')"],
+      ["💰 Tarifas",         "showPage('pagos-public')"],
+      ["📜 Reglamento",      "showPage('reglamento-public')"],
+      ["🎓 Estudiantes",     "showAdminSection('dash-estudiantes')"],
+      ["📋 Notas",           "showAdminSection('dash-notas')"],
+      ["📅 Ausencias",       "showAdminSection('dash-ausencias')"],
+      ["📝 Inscripciones",   "showAdminSection('dash-inscripciones')"],
+      ["💬 Mensajes",        "showAdminSection('dash-mensajes')"],
+    ],
+    profesor: [
+      ["🏠 Inicio",          "showPage('home')"],
+      ["📋 Notas",           "showPage('profesor');showProfeSection('profe-notas',null)"],
+      ["📅 Ausencias",       "showPage('profesor');showProfeSection('profe-ausencias',null)"],
+      ["📂 Récords",         "showPage('profesor');showProfeSection('profe-records',null)"],
+      ["💬 Mensajes",        "showPage('profesor');showProfeSection('profe-mensajes',null)"],
+      ["📢 Anuncios",        "showPage('anuncios')"],
+      ["📜 Reglamento",      "showPage('reglamento-public')"],
+    ],
+    estudiante: [
+      ["🏠 Inicio",          "showPage('home')"],
+      ["📋 Mis Notas",       "showPage('estudiante');showEstudianteSection('est-notas')"],
+      ["📅 Horario",         "showPage('estudiante');showEstudianteSection('est-horario')"],
+      ["📢 Anuncios",        "showPage('anuncios')"],
+      ["💰 Tarifas",         "showPage('pagos-public')"],
+      ["📜 Reglamento",      "showPage('reglamento-public')"],
+    ],
+    padre: [
+      ["🏠 Inicio",          "showPage('home')"],
+      ["📋 Notas",           "showPage('padre');showPadreSection('padre-notas')"],
+      ["📝 Inscripciones",   "showPage('padre');showPadreSection('padre-inscripciones')"],
+      ["💬 Msg. Profesor",   "showPage('padre');showPadreSection('padre-mensajes-section');renderMensajes()"],
+      ["📢 Anuncios",        "showPage('anuncios')"],
+      ["💰 Tarifas",         "showPage('pagos-public')"],
+      ["📜 Reglamento",      "showPage('reglamento-public')"],
+    ],
+    enfermeria: [
+      ["🏠 Inicio",          "showPage('home')"],
+      ["📋 Consultas",       "showPage('enfermeria');showEnferSection('enfer-registros');renderRegistrosEnfer()"],
+      ["➕ Nueva Consulta",  "openModal('modal-consulta');populateConsultaEstSelect()"],
+      ["🔍 Buscar",          "showPage('enfermeria');showEnferSection('enfer-buscar')"],
+      ["💊 Stock",           "showPage('enfermeria');showEnferSection('enfer-stock');renderStock()"],
+      ["📊 Estadísticas",    "showPage('enfermeria');showEnferSection('enfer-estadisticas');renderEnferStats()"],
+    ]
+  };
+  var items = navs[role] || navs['padre'];
+  var html = items.map(function(i){
+    return '<button class="nav-btn" onclick="'+i[1]+'">'+i[0]+'</button>';
+  }).join('');
+  nl.innerHTML = html;
+  return; // old code below is skipped
+  let _unused = '';
   if(role==='admin'){
     html=`
       <div class="nav-dropdown">
