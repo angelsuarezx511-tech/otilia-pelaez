@@ -689,17 +689,29 @@ function buildNavbar(role){
   }
   nl.innerHTML=html;
   // Re-attach dropdown events
-  document.querySelectorAll('.dropdown-trigger').forEach(btn=>{
+  document.querySelectorAll('.dropdown-trigger').forEach(function(btn){
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      const menu=this.nextElementSibling;
-      document.querySelectorAll('.dropdown-menu.open').forEach(m=>{if(m!==menu)m.classList.remove('open');});
-      menu.classList.toggle('open');
+      e.preventDefault();
+      // Find the dropdown-menu inside the same nav-dropdown parent
+      var parent = this.closest('.nav-dropdown') || this.parentElement;
+      var menu = parent ? parent.querySelector('.dropdown-menu') : this.nextElementSibling;
+      if(!menu) return;
+      var isOpen = menu.classList.contains('open');
+      // Close all others
+      document.querySelectorAll('.dropdown-menu.open').forEach(function(m){ m.classList.remove('open'); });
+      // Toggle this one
+      if(!isOpen) menu.classList.add('open');
     });
   });
-  document.addEventListener('click',()=>{
-    document.querySelectorAll('.dropdown-menu.open').forEach(m=>m.classList.remove('open'));
-  },{once:false});
+  // Global close on outside click (use capture to catch before stopPropagation)
+  document.removeEventListener('click', window._dropdownClose);
+  window._dropdownClose = function(e){
+    if(!e.target.closest('.nav-dropdown')){
+      document.querySelectorAll('.dropdown-menu.open').forEach(function(m){ m.classList.remove('open'); });
+    }
+  };
+  document.addEventListener('click', window._dropdownClose);
 }
 
 function showAdminSection(id){
